@@ -1,0 +1,29 @@
+---
+title: "Lab 1"
+author: "Collin Dabbieri"
+date: "August 19, 2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1
+
+Find working directory
+
+```{r}
+getwd()
+```
+
+# Task 2
+
+
+```{r}
+library(readxl)
+```
+
