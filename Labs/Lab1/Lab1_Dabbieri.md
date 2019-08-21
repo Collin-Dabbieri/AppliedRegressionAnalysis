@@ -9,22 +9,26 @@ output:
     keep_md: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 # Task 1
 
 Find working directory
 
-```{r}
+
+```r
 getwd()
+```
+
+```
+## [1] "/home/collindabbieri/Documents/AppliedRegressionAnalysis/Labs/Lab1"
 ```
 
 # Task 2
 
 
-```{r}
+
+```r
 library(readxl)
 ```
 
