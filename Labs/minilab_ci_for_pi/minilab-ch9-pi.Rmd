@@ -1,0 +1,55 @@
+---
+title: 'Mini-Lab: CI for $p_i$'
+author: "Wayne Stewart"
+date: "`r Sys.time()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Usually statisticians make the assumption that when $n\rightarrow \infty$ we can say
+
+$$V(\hat{P}_i)\approx \frac{\hat{p}_i(1-\hat{p}_i)}{n}$$
+
+So that a $100(1-\alpha)\%$ ci for $p_i$ is
+
+$$\hat{p_i}\pm Z_{\alpha/2}\sqrt{\frac{\hat{p}_i(1-\hat{p}_i)}{n}}$$
+
+
+# Tasks
+
+
+1. Please use the theory given in class and complete what I gave (partly done - no continuity correction) to find a more accurate confidence interval by NOT assuming the above for $V(\hat{P}_i)$. Show all working in $\LaTeX$ within this document.
+
+$$\begin{eqnarray} 
+P\left(-z_{\alpha/2}\le \frac{\hat{p}_i-p_i}{\sqrt{p_i(1-p_i)/n}}\le z_{\alpha/2}\right)&=&1-\alpha\\
+&=&
+\end{eqnarray}$$
+Help with Latex see <https://www.stat.cmu.edu/~cshalizi/rmarkdown/> also
+<https://en.wikibooks.org/wiki/LaTeX/Mathematics>
+
+Help with the final result may be found here: <https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval>
+
+Make an R function that will calculate the more accurate interval as well as the usual approximation. Call it `mycip(x,n,alpha)` the output will be a list.
+
+2. If `x=9,n=20` and $\alpha=0.05$ call `mycip()`
+
+```{r}
+cat("Place code in this chunk")
+```
+
+
+3. If `x=4,n=10` and $\alpha=0.05$  call `mycip()` 
+
+```{r}
+cat("Place code in this chunk")
+```
+
+4. Write a sentence commenting on the width of the intervals calculated with each of the two methods.
