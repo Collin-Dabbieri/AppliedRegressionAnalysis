@@ -1,0 +1,107 @@
+---
+title: 'Class Exercise 1: 4773'
+author: "Collin Dabbieri"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Make an R function
+This function will be entirely your own work - you can however use other packages to create the plot if you wish.
+
+## Make an R function that will do the following
+Look at the formula MS page 446.
+For a one way table:
+
+>
+  1. Create point estimates for $p_i-p_j$
+  2. Create ci's for $p_i-p_j$
+  3. Create a colored barplot.
+  
+```{r mypipj}
+mypipj = function(tab,ni,nj,alpha=0.05) #tab = table
+{
+  total_points=sum(tab)
+  ci_matrix_lower=array(dim=c(length(tab),length(tab)))
+  ci_matrix_upper=array(dim=c(length(tab),length(tab)))
+  pt_est_matrix=array(dim=c(length(tab),length(tab)))
+  z=qnorm(1-alpha/2,0,1)
+  for (i in 1:length(tab)){
+    for (j in 1:length(tab)){
+      if (i==j){
+        
+      }
+      else{
+        pihat=tab[i]/total_points
+        pjhat=tab[j]/total_points
+        pt_est=pihat-pjhat
+        pt_est_matrix[i,j]=pt_est
+      
+        radicand=(pihat*(1-pihat)+pjhat*(1-pjhat)+2*pihat*pjhat)/(total_points)
+        lower=pt_est-z*sqrt(radicand)
+        upper=pt_est+z*sqrt(radicand)
+        ci=c(lower,upper)
+        ci_matrix_lower[i,j]=lower
+        ci_matrix_upper[i,j]=upper
+        
+      }
+
+      
+    }
+    
+  }
+  
+  dimnames(ci_matrix_lower) = list( c("A", "B","C","D","E"),c("A","B","C","D","E"))
+  dimnames(ci_matrix_upper) = list( c("A", "B","C","D","E"),c("A","B","C","D","E")) 
+  dimnames(pt_est_matrix) = list( c("A", "B","C","D","E"),c("A","B","C","D","E"))
+
+  
+  
+  # Now create colored barplot with hypothesis values and sample values
+  num_categories=length(tab)
+  hypoth_val=1./num_categories
+ 
+  
+  true_vals=c()
+  for (i in 1:num_categories){
+    ptemp=tab[i]/total_points
+    true_vals=append(true_vals,ptemp)
+  }
+
+  
+  barplot(rbind(true_vals,hypoth_val),beside=TRUE,legend = c("sample", "hypothesis"),xlab="Categories",ylab="Proportion",col=c('lightblue','magenta'))
+  
+  return(list(ci_lower_bound=ci_matrix_lower,ci_upper_bound=ci_matrix_upper,pt_est=pt_est_matrix))
+  
+}
+```
+
+
+## Use data in your function
+
+Use the IMPELLER.xls (see MS pg 444) file for the table.
+
+```{r}
+library(readxl)
+IMPELLER <- read_excel("/home/collindabbieri/Documents/AppliedRegressionAnalysis/Dataxls/Excel/IMPELLER.XLS")
+#head(IMPELLER,font="courier new")
+f=IMPELLER$DEFECTIVE
+nf=IMPELLER$LINE
+m=rep(nf,f)
+imptab=table(m)
+imptab
+
+```
+
+
+```{r impeller}
+list=mypipj(imptab,ni=31,nj=11,alpha=0.05)
+list
+```
+

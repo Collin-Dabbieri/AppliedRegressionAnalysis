@@ -1,0 +1,42 @@
+---
+title: 'Class Exercise 1: 4773'
+author: "Dr. Wayne Stewart"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Make an R function
+This function will be entirely your own work - you can however use other packages to create the plot if you wish.
+
+## Make an R function that will do the following
+Look at the formula MS page 446.
+For a one way table:
+
+>
+  1. Create point estimates for $p_i-p_j$
+  2. Create ci's for $p_i-p_j$
+  3. Create a colored barplot.
+  
+```{r mypipj, eval=FALSE}
+mypipj = function(tab,ni,nj,alpha=0.05) #tab = table
+{
+  
+}
+```
+
+
+## Use data in your function
+
+Use the IMPELLER.xls (see MS pg 444) file for the table.
+
+```{r impeller,eval=FALSE}
+mypipj(imptab,ni=27,nj=19,alpha=0.1)
+```
+
