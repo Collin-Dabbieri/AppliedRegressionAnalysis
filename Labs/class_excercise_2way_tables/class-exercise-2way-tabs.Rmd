@@ -1,0 +1,70 @@
+---
+title: "Class-exercise-ch 9 2 way"
+author: "Wayne Stewart"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: darkly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+You will need to be able to conduct analyses for one and two way tables.
+
+All theory needs to be understood and applied.
+
+# Problems
+
+1. Conduct the analyses needed to answer 9.23 "Cry Wolf" using the usual chi-square methodology taught
+
+```{r}
+cryw = matrix(c(3,231,
+                37,166), nr=2,nc=2, byrow=TRUE)
+rownames(cryw)= c("TRUE_Alert", "FALSE_Alert")
+colnames(cryw)= c("NoResp", "Resp")
+cryw
+```
+
+2. Do the same analysis using the exact fisher test `fisher.test()`
+
+3. Now perform the HIV test as done in Chapter 9 except use chi square methods and the  following code:
+```{r}
+## HIV testing
+tab = matrix(c(9,22,
+               5,2),
+             nr=2,
+             nc=2, 
+             byrow = TRUE)
+rownames(tab)=c("unvacc","vacc")
+colnames(tab) = c("Neg", "Pos")
+tab
+tab=as.table(tab)
+#chisq.test(tab,cor=FALSE)
+
+```
+
+  + What is the problem with the test?
+  + Use the following code to conduct the exact Fisher test after you have adjusted it to calculate the correct Pvalue (see the BOOK about this point)
+  
+```{r}
+myfisher = function(mat, alpha=0.05){
+  rs=rowSums(mat)
+  cs=colSums(mat)
+  tabprob=dhyper(x=mat[1,1],m=rs[1],n=rs[2],k=cs[1])
+  pv=vector(mode="double", length=cs[1]+1)
+  for(i in 1:(cs[1]+1)){
+    pv[i]=dhyper(x=i-1,m=rs[1],n=rs[2],k=cs[1])
+  }
+  names(pv)=0:cs[1]
+  barplot(pv,col=rainbow(cs[1]+1))
+  v = sum(pv[pv<=tabprob])
+  list(pvals=pv,pval=v, test = ifelse(v > alpha, "accept", "reject"))
+}
+```
+  

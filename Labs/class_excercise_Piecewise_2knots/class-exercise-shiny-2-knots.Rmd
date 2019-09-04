@@ -1,0 +1,67 @@
+---
+title: 'Class exercise: Change-point'
+author: "Wayne Stewart"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: darkly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This exercise requires you to learn about `shiny` web server and the modification of a working app to answer a similar problem.
+
+See information, documentation and tutorials here: <https://shiny.rstudio.com/tutorial/>
+
+# Theory
+
+You must understand the theory related to piecewise regression as given in class.
+
+
+# Questions
+
+1. Write down the model formula for the piecewise regression where the knots are located at $x_{k1}$ and $x_{k2}$ where $x_{k2}>x_{k1}$.
+
+$$y_i=\beta_0 + \beta_1 x_i + \ldots $$
+
+2. Take the supplied app and understand the code given. Then change the app to create:
+  + two knots at places $x_{k1}$ and $x_{k2}$. 
+  + a widget for each knot.
+  + reproduce a similar plot (as the exemplar) except this time make the $R^2$ as a function of $x_{k1}$ and $x_{k2}$. 
+  + multiple $R^2$ as the criterion to select the "best" placement of the 2 knots.
+  + plots and widgets similar to the exemplar app.
+  + additional 3D plots using the R package `rgl` `plot3d()` and/or `plotly`. These plots are to be used to plot the bivariate $f(x_{k1},x_{k2})$ -- please note: When using the package `rgl` you will need to declare `rglwidget()` last:
+  
+>There are two ways to embed an rgl scene in the document. The recommended one is to call rglwidget to produce a "widget" which can be embedded into your document by printing it.
+
+Example:
+
+```{r}
+library(rgl)
+open3d()
+plot3d(lm(mpg ~ wt + I(wt^2) + qsec, data = mtcars))
+rglwidget()
+```
+
+The above code is great for `lm` models where there are 2 independent variables. 
+
+What if you don't have an `lm` model -- say you only have a function in $x_{k1}$ and $x_{k2}$? There are `rgl` options for you. You can also use `plotly` and `ggplot2`
+
+```{r ,warning=FALSE,message=FALSE}
+library(plotly)
+temp <- rnorm(100, mean=30, sd=5)
+pressure <- rnorm(100)
+dtime <- 1:100
+plot_ly(x=temp, y=pressure, z=dtime, type="scatter3d", mode="markers", color=temp)
+```
+
+  
+3. Create the app keeping in mind that I will need to download all files into one directory and make it run. 
+
+4. Upload to CANVAS all files used for the app. Remember I dont want to mess with these files -- I should be able to download and run!
