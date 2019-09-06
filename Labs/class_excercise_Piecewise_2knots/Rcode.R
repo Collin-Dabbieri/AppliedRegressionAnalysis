@@ -1,7 +1,7 @@
 
 
-myf = function(x,xk,coef){
-  coef[1]+coef[2]*(x) + coef[3]*(x-xk)*(x-xk>0)
+myf = function(x,xk1,xk2,coef){
+  coef[1]+coef[2]*(x) + coef[3]*(x-xk1)*(x-xk1>0) +coef[4]*(x-xk2)*(x-xk2>0)
 }
 
 rsq = function(xk,data){ # data=spruce.df
@@ -11,8 +11,20 @@ rsq = function(xk,data){ # data=spruce.df
   tmp$r.squared
 }
 
+rsq2 = function(xk1,xk2,data){ #data=spruce.df
+  B2=with(data,(BHDiameter-xk1)*(BHDiameter>xk1))
+  B3=with(data,(BHDiameter-xk2)*(BHDiameter>xk2))
+  lmp=lm(Height ~ BHDiameter + B2 + B3,data=data)
+  tmp=summary(lmp)
+  tmp$r.squared
+}
+
 rsqdash = function(xk,h,data) {
  (rsq((xk+h/2),data)-rsq((xk-h/2),data))/h
+}
+
+rsqdash2 = function(xk1,xk2,h,data){
+  (rsq2((xk1+h/2),(xk2+h/2),data)-rsq2((xk1-h/2),(xk2-h/2),data))/h
 }
 
 

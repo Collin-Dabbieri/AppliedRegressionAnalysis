@@ -3,12 +3,51 @@ library(shiny)
 #library(ggplot2)
 library(purrr)
 library(rootSolve)
-source("Rcode.r")
+source("Rcode.R")
+library(rgl)
+library(plotly)
 
 spruce.df = read.csv("SPRUCE.csv")
 
 d = spruce.df$BHDiameter
 
+#We're defining the grid search for R^2 values outside of the function so we only have to do it once
+xk1_range = seq(min(d),max(d),length=10)
+xk2_range = seq(min(d),max(d),length=10)
+names(xk1_range)='xk1'
+names(xk2_range)='xk2'
+R2=matrix(, nrow = length(xk1_range), ncol = length(xk2_range))
+
+max_R2=0
+
+#fill R2 matrix for contour and find highest R^2 value
+for (i in 1:length(xk1_range)){
+   for (j in 1:length(xk2_range)){
+      if (j>i){
+         xk1_val=xk1_range[i]
+         xk2_val=xk2_range[j]
+         R2[j,i]=rsq2(xk1_val,xk2_val,spruce.df)
+         if (R2[j,i]>max_R2){
+            max_R2<-R2[j,i]
+            max_loc=c(xk1_val,xk2_val)
+         }
+         
+      }
+   }
+}
+#create x,y,z coords for rgl plot
+x=c()
+y=c()
+z=c()
+for (i in 1:length(xk1_range)){
+   for (j in 1:length(xk2_range)){
+      if (j>i){
+         x=append(x,xk1_range[i])
+         y=append(y,xk2_range[j])
+         z=append(z,R2[j,i])
+      }
+   }
+}
 
 
 # Define UI for application that draws a histogram
@@ -21,30 +60,32 @@ ui <- fluidPage(
    
    sidebarLayout(
       sidebarPanel(
-         sliderInput("xk",
-                     "Choose knot:",
+         sliderInput("xk1",
+                     "Choose knot number 1:",
                      min = min(d),
                      max = max(d),
                      value = 17.44165,
                      step=0.01),
-         
-         sliderInput("intervalroot",
-                     "choose L and U for root interval:",
+         sliderInput("xk2",
+                     "Choose knot number 2:",
                      min = min(d),
-                     max = max(d),
-                     value = c(15,17.55),
+                     max=max(d),
+                     value=20.0,
                      step=0.01)
+         
+         
                      
       ),
       
       # Show a plot of the generated distribution
       mainPanel(
          plotOutput("regressPlot"),
-         plotOutput("R2"),
-         tableOutput("root"),
+         plotlyOutput("R2_contour"),
+         rglwidgetOutput("R2_3D"),
+         #tableOutput("root"),
          # table of data
-         tableOutput("tab"),
-         plotOutput("allroots")
+         tableOutput("tab")
+         #plotOutput("allroots")
       )
    )
 )
@@ -59,65 +100,72 @@ server <- function(input, output) {
      plot(spruce.df,main="Piecewise regression",pch=21,bg="black")
      
      
-     sp2.df=within(spruce.df, X<-(BHDiameter-input$xk)*(BHDiameter>input$xk))  
-      lmp = lm(Height ~ BHDiameter + X, data = sp2.df)
-      tmp=summary(lmp) # tmp holds the summary info
+     #sp2.df=within(spruce.df, X1<-(BHDiameter-input$xk1)*(BHDiameter>input$xk1),X2<-(BHDiameter-input$xk2)*(BHDiameter>input$xk2))  
+      #lmp = lm(Height ~ BHDiameter + X1+X2, data = sp2.df)
+      #tmp=summary(lmp) # tmp holds the summary info
+      #print(tmp$coefficients[,"Estimate"])
+     B2=with(spruce.df,(BHDiameter-input$xk1)*(BHDiameter>input$xk1))
+     B3=with(spruce.df,(BHDiameter-input$xk2)*(BHDiameter>input$xk2))
+     lmp=lm(Height ~ BHDiameter + B2 + B3,data=spruce.df)
+     tmp=summary(lmp)
+     print(tmp)
+     #print(tmp$coefficients[,"Estimate"])
+      
+   
       
       
       
-      curve(myf(x,xk=input$xk,coef=tmp$coefficients[,"Estimate"] ),
+      curve(myf(x,xk1=input$xk1,xk2=input$xk2,coef=tmp$coefficients[,"Estimate"] ),
             add=TRUE, 
             lwd=2,
             col="Blue")
       
-     points(input$xk,myf(input$xk,input$xk,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="green",cex=2) 
+     points(input$xk1,myf(input$xk1,input$xk1,input$xk2,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="green",cex=2)
+     points(input$xk2,myf(input$xk2,input$xk1,input$xk2,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="green",cex=2)
      
-     points(uroot()$root,myf(uroot()$root,uroot()$root,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="purple",cex=2) 
+     #points(uroot()$root,myf(uroot()$root,uroot()$root,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="purple",cex=2) 
      
-      text(input$xk,16,
+      text(20,16,
            paste("R sq.=",round(tmp$r.squared,4) ))
       
    }) 
    
-   uroot = reactive({
-     intv = input$intervalroot
-     uniroot(f=rsqdash, interval=intv, h=0.001,data=spruce.df, extendInt = "yes" )
-   })
-   
-   urootall = reactive({
-     intv = input$intervalroot
-     uniroot.all(f=rsqdash, interval=intv, h=0.001,data=spruce.df )
-   })
-   
-   output$R2 <- renderPlot({
-     dsmooth = seq(min(d),max(d),length=1000)
-     r2=map_dbl(dsmooth, ~rsq(.x,data=spruce.df))
-     plot(dsmooth,r2,pch=21,bg="purple",
-          ylab = expression(R^2 ),
-          xlab = "knot",
-          cex=0.5,
-          main="Determination of possible knots",
-          type="p",
-          ylim = c(min(r2),1.1*max(r2)))
-     intv = input$intervalroot
-     rts=uroot()
-     r2=rsq(rts$root,data=spruce.df)
-     abline(v=seq(floor(min(d)), ceiling(max(d)), by=1), lwd=0.5,col="pink")
-     abline(v=rts$root,h=rsq(rts$root,data=spruce.df))
-     text(rts$root, r2*1.05,paste("knot is:", rts$root))
-     axis(3, round(rts$root,4))
-     axis(4, round(r2,4),col="Red")
-    
-   })
+
    
    
-   output$root<-renderTable({
+   output$R2_contour <- renderPlotly({
+      f <- list(
+         family = "Courier New, monospace",
+         size = 18,
+         color = "#7f7f7f"
+      )
+      x <- list(
+         title = "xk1",
+         titlefont = f
+      )
+      y <- list(
+         title = "xk2",
+         titlefont = f
+      )
+      plot_ly(x=xk1_range,
+              y=xk2_range,
+              z=R2,
+              type="contour"
+              )%>%
+         add_trace(x=max_loc[1],y=max_loc[2],type="scatter",color='red')%>%
+         layout(title="Contour Plot for R^2",xaxis = x, yaxis = y)
+
      
-     intv = input$intervalroot
-    rts=uroot()
-    as.data.frame(rts)
      
    })
+   
+   output$R2_3D <- renderRglwidget({
+      try(rgl.close())
+      plot3d(x, y, z,xlab="xk1",ylab="xk2",zlab="R^2")
+      rglwidget()
+   })
+   
+ 
    
    
 }
