@@ -11,43 +11,6 @@ spruce.df = read.csv("SPRUCE.csv")
 
 d = spruce.df$BHDiameter
 
-#We're defining the grid search for R^2 values outside of the function so we only have to do it once
-xk1_range = seq(min(d),max(d),length=10)
-xk2_range = seq(min(d),max(d),length=10)
-names(xk1_range)='xk1'
-names(xk2_range)='xk2'
-R2=matrix(, nrow = length(xk1_range), ncol = length(xk2_range))
-
-max_R2=0
-
-#fill R2 matrix for contour and find highest R^2 value
-for (i in 1:length(xk1_range)){
-   for (j in 1:length(xk2_range)){
-      if (j>i){
-         xk1_val=xk1_range[i]
-         xk2_val=xk2_range[j]
-         R2[j,i]=rsq2(xk1_val,xk2_val,spruce.df)
-         if (R2[j,i]>max_R2){
-            max_R2<-R2[j,i]
-            max_loc=c(xk1_val,xk2_val)
-         }
-         
-      }
-   }
-}
-#create x,y,z coords for rgl plot
-x=c()
-y=c()
-z=c()
-for (i in 1:length(xk1_range)){
-   for (j in 1:length(xk2_range)){
-      if (j>i){
-         x=append(x,xk1_range[i])
-         y=append(y,xk2_range[j])
-         z=append(z,R2[j,i])
-      }
-   }
-}
 
 
 # Define UI for application that draws a histogram
@@ -71,7 +34,14 @@ ui <- fluidPage(
                      min = min(d),
                      max=max(d),
                      value=20.0,
-                     step=0.01)
+                     step=0.01),
+         
+         sliderInput("n",
+                     "Choose sampling for xk1 and xk2:",
+                     min=10,
+                     max=100,
+                     value=50,
+                     step=1)
          
          
                      
@@ -123,6 +93,8 @@ server <- function(input, output) {
      points(input$xk1,myf(input$xk1,input$xk1,input$xk2,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="green",cex=2)
      points(input$xk2,myf(input$xk2,input$xk1,input$xk2,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="green",cex=2)
      
+     #points(max_loc[1],myf(max_loc[1],max_loc[1],max_loc[2],coef=tmp$coefficients[,"Estimate"]),col="purple",pch=21,bg="green",cex=2)
+     
      #points(uroot()$root,myf(uroot()$root,uroot()$root,coef=tmp$coefficients[,"Estimate"] ),col="black",pch=21,bg="purple",cex=2) 
      
       text(20,16,
@@ -134,6 +106,30 @@ server <- function(input, output) {
    
    
    output$R2_contour <- renderPlotly({
+      
+      #We're defining the grid search for R^2 values outside of the function so we only have to do it once
+      xk1_range = seq(min(d),max(d),length=input$n)
+      xk2_range = seq(min(d),max(d),length=input$n)
+      R2=matrix(, nrow = length(xk1_range), ncol = length(xk2_range))
+      
+      max_R2=0
+      
+      #fill R2 matrix for contour and find highest R^2 value
+      for (i in 1:length(xk1_range)){
+         for (j in 1:length(xk2_range)){
+            if (j>i){
+               xk1_val=xk1_range[i]
+               xk2_val=xk2_range[j]
+               R2[j,i]=rsq2(xk1_val,xk2_val,spruce.df)
+               if (R2[j,i]>max_R2){
+                  max_R2<-R2[j,i]
+                  max_loc=c(xk1_val,xk2_val)
+               }
+               
+            }
+         }
+      }
+      
       f <- list(
          family = "Courier New, monospace",
          size = 18,
@@ -160,8 +156,48 @@ server <- function(input, output) {
    })
    
    output$R2_3D <- renderRglwidget({
+      xk1_range = seq(min(d),max(d),length=input$n)
+      xk2_range = seq(min(d),max(d),length=input$n)
+      
+      R2=matrix(, nrow = length(xk1_range), ncol = length(xk2_range))
+      
+      max_R2=0
+      
+      #fill R2 matrix for contour and find highest R^2 value
+      for (i in 1:length(xk1_range)){
+         for (j in 1:length(xk2_range)){
+            if (j>i){
+               xk1_val=xk1_range[i]
+               xk2_val=xk2_range[j]
+               R2[j,i]=rsq2(xk1_val,xk2_val,spruce.df)
+               if (R2[j,i]>max_R2){
+                  max_R2<-R2[j,i]
+                  max_loc=c(xk1_val,xk2_val)
+               }
+               
+            }
+         }
+      }
+      
+      #create x,y,z coords for rgl plot
+      x=c()
+      y=c()
+      z=c()
+      for (i in 1:length(xk1_range)){
+         for (j in 1:length(xk2_range)){
+            if (j>i){
+               x=append(x,xk1_range[i])
+               y=append(y,xk2_range[j])
+               z=append(z,R2[j,i])
+            }
+         }
+      }
+      
       try(rgl.close())
-      plot3d(x, y, z,xlab="xk1",ylab="xk2",zlab="R^2")
+      z_stand=(z-mean(z))/sd(z)
+      z_stand=z_stand+abs(min(z_stand))
+      z_stand=z_stand/max(z_stand)
+      plot3d(x, y, z,xlab="xk1",ylab="xk2",zlab="R^2",col=rgb(z_stand,1-z_stand,0))
       rglwidget()
    })
    
