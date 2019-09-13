@@ -1,0 +1,128 @@
+---
+title: 'Ch11: minilab'
+author: "Collin Dabbieri"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: yes
+    toc_float: yes
+    highlight: pygments
+    theme: spacelab
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+
+# Introduction
+
+MLR (Multiple Linear Regression) is very versatile and can be framed to solve many different statistical problems (especially once we include categorical variables).
+
+There are a number of theorems that we will prove and they all require algebraic manipulation using some basic matrix theory.
+
+You will apply some of the matrix results in this mini lab.
+
+# Matrix results and definitions
+
+There are not many we need -- the main ones for now are:
+
+>
+    1. $(AB)^{'} =B^{'} A^{'}$
+    2. $( A^{-1} )^{'} = ( A^{'} )^{-1}$
+    3. If $M$ is idempotent then $MM=M$
+    4. Square matrix $A$ is symmetric if and only if $A^{'}=A$
+    
+    
+# Application
+
+## The projection matrix $H$
+
+Also known as the hat matrix.
+
+$$H=X(X^{'}X)^{-1}X^{'}$$
+
+## Questions
+
+Using Latex show the following to be true:
+
+
+>
+    1. $H$ is symmetric
+    2. $(I-H)$ is symmetric
+    3. $H$ is idempotent
+    4. $(I-H)$ is idempotent
+    5. $HX=X$
+    6. $H(I-H)=0$
+    
+### 1. $H$ is symmetric
+Need to show $H'=H$
+
+$$[X(X'X)^{-1}X']'=H'$$
+
+$$ X (X (X'X)^{-1})'=H' $$
+
+$$ X((X'X)^{-1})'X'=H' $$
+
+$$ X ((X'X)')^{-1}X'=H' $$
+
+$$ X(X'X)^{-1}X'=H' $$
+
+$$H=H'$$
+
+### 2. $(I-H)$ is symmetric
+
+Need to show $(I-H)'=(I-H)$
+
+$$(I-H)'=I'-H'=I-H$$
+
+Since we've shown in 1.) that $H'=H$
+
+### 3. $H$ is idempotent
+
+Need to show $H^2=H$
+
+$$ X(X'X)^{-1}X'X(X'X)^{-1}X'=H^2 $$
+$$ X(X'X)^{-1}(X'X)(X'X)^{-1}X'=H^2 $$
+
+Aside: $(X'X)(X'X)^{-1}=I$
+
+$$ X(X'X)^{-1}IX'=H^2 $$
+
+$$ X(X'X)^{-1}X'=H^2 $$
+
+$$ H=H^2 $$
+
+### 4. $(I-H)$ is idempotent
+
+Need to show $(I-H)^2=(I-H)$
+
+$$ (I-H)^2=(I-H)(I-H) $$
+$$ (I-H)^2=I-H-H+H^2 $$
+We know from 3.) that $H^2=H$
+
+$$ (I-H)^2=I-H-H+H $$
+$$ (I-H)^2=I-H $$
+
+### 5. $HX=X$
+
+$$HX=X(X'X)^{-1}X'X$$
+
+Aside: $(X'X)^{-1}(X'X)=I$
+
+$$ HX=XI $$
+
+$$HX=X$$
+
+
+
+### 6. $H(I-H)=0$
+
+$$ H(I-H)=HI-H^2$$
+
+$$ H(I-H)=H-H $$
+
+$$H(I-H)=0$$
+    

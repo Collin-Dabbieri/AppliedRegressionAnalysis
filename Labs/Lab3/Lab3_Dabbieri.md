@@ -1,0 +1,468 @@
+---
+title: "Laboratory 3"
+author: "Collin Dabbieri"
+date: "9/12/2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+
+
+
+# Task 1
+
+
+```r
+getwd()
+```
+
+```
+## [1] "/home/collindabbieri/Documents/AppliedRegressionAnalysis/Labs/Lab3"
+```
+
+# Task 2
+
+
+```r
+library(readxl)
+insulation=read_excel("/home/collindabbieri/Documents/AppliedRegressionAnalysis/Dataxls/Excel/INSULATION.xls")
+
+head(insulation)
+```
+
+```
+## # A tibble: 5 x 2
+##   PRESS_X COMP_Y
+##     <dbl>  <dbl>
+## 1       1      1
+## 2       2      1
+## 3       3      2
+## 4       4      2
+## 5       5      4
+```
+
+```r
+getwd()
+```
+
+```
+## [1] "/home/collindabbieri/Documents/AppliedRegressionAnalysis/Labs/Lab3"
+```
+
+
+# Task 3
+From page 558 in MS
+
+General form of a Multiple Regression Model
+$$ y = \beta_0 + \beta_1x_1+ \beta_2x_2 + ... + \beta_kx_k + \epsilon  $$
+where y is the dependent variable
+$x_1,x_2,...,x_k$ are the independent variables
+$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+...+\beta_kx_k$ is the deterministic portion of the model. $\beta_i$ determines the contribution of the independent variable $x_i$
+
+The model is also called a general linear model because E(y) is a linear function of the unknown parameters, $\beta_0,\beta_1,...$
+
+An example of a nonlinear model would be $E(y)=\beta_0e^{-\beta_1x}$
+
+The model formula appropriate to the INSULATION data is
+
+$y=\beta_0+\beta_1x_1$
+
+# Task 4
+
+Write down the six steps in analyzing a multiple regression model
+
+from page 559 in MS
+
+1. Hypothesize the deterministic component of the model. This relates the mean, E(y), to the independent variables $x_1,x_2,...,x_k$. This involves the choice of the independent variables to be included in the model
+
+2. Use the sample data to estimate $\beta_0,\beta_1,...,\beta_k$
+
+3. Specify the probability distribution of the random error term, $\epsilon$, and estimate the standard deviation of this distribution, $\sigma$.
+
+4. Check that the assumptions on $\epsilon$ are satisfied, and make model modifications if necessary.
+
+5. Statistically evaluate the usefulnees of the model.
+
+6. When satisfied that the model is useful, use it for prediction, estimation, and other purposes.
+
+Write down the four assumptions of a Multiple Regression Analysis.
+
+From page 560 in MS
+
+1. The mean of $\epsilon$ is 0, meaning the E(y) is equivalent to the deterministic portion of the model.
+
+2. For all settings of the independent variables $x_1,x_2,...,x_k$, the variance of $\epsilon$ is constant. $V(\epsilon)=\sigma^2$
+
+3. The probability distribution of $\epsilon$ is normal.
+
+4. The random errors are independent.
+
+For the INSULATION data, how many independent variables are there?
+1
+
+Using the s20x library and the function normcheck()-what do you conclude?
+
+
+```r
+library(s20x)
+
+#normcheck takes a fitted lm object
+
+inslm=lm(lm(COMP_Y ~ PRESS_X, data = insulation))
+
+check=normcheck(inslm,shapiro.wilk = TRUE)
+```
+
+![](Lab3_Dabbieri_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
+For the Shapiro-Wilk test, the NULL is that the residuals are normally distributed. The p-value for the test is 0.876, so we do not have evidence to conclude that $\epsilon$ is not distributed normal.
+
+# Task 5
+
+Use R to make a Y vector and X design matrix
+
+
+```r
+Y=matrix(,nrow=length(insulation$COMP_Y),ncol=1)
+Y[,1]=insulation$COMP_Y
+X=matrix(,nrow=length(insulation$COMP_Y),ncol=2)
+X[,1]=1
+X[,2]=insulation$PRESS_X
+Y
+```
+
+```
+##      [,1]
+## [1,]    1
+## [2,]    1
+## [3,]    2
+## [4,]    2
+## [5,]    4
+```
+
+```r
+X
+```
+
+```
+##      [,1] [,2]
+## [1,]    1    1
+## [2,]    1    2
+## [3,]    1    3
+## [4,]    1    4
+## [5,]    1    5
+```
+
+Find the MLR beta estimates from the formula on page 562.
+
+$$\hat{\beta}=(X'X)^{-1}X'Y$$
+
+
+
+```r
+betahat=solve(t(X)%*%X)%*%t(X)%*%Y
+rownames(betahat)=c("beta0","beta1")
+betahat
+```
+
+```
+##       [,1]
+## beta0 -0.1
+## beta1  0.7
+```
+
+
+
+```r
+mybeta=function(X,Y){
+  betahat=solve(t(X)%*%X)%*%t(X)%*%Y
+  return(betahat)
+}
+mybeta(X,Y)
+```
+
+```
+##      [,1]
+## [1,] -0.1
+## [2,]  0.7
+```
+lm will also give values for $\hat{\beta}$
+
+
+```r
+summary(inslm)
+```
+
+```
+## 
+## Call:
+## lm(formula = lm(COMP_Y ~ PRESS_X, data = insulation))
+## 
+## Residuals:
+##          1          2          3          4          5 
+##  4.000e-01 -3.000e-01 -5.551e-17 -7.000e-01  6.000e-01 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)  
+## (Intercept)  -0.1000     0.6351  -0.157   0.8849  
+## PRESS_X       0.7000     0.1915   3.656   0.0354 *
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.6055 on 3 degrees of freedom
+## Multiple R-squared:  0.8167,	Adjusted R-squared:  0.7556 
+## F-statistic: 13.36 on 1 and 3 DF,  p-value: 0.03535
+```
+
+These values for $\hat{\beta}$ agree with the values I calculated.
+
+# Task 6
+
+From table 11.3 on page 563
+
+
+```r
+comp=c(1,1,2,2,4)
+temp=c(1,2,2,4,3)
+press=c(1,2,3,4,5)
+
+Y=matrix(,nrow=length(comp),ncol=1)
+Y[,1]=comp
+X=matrix(,nrow=length(comp),ncol=3)
+X[,1]=1
+X[,2]=press
+X[,3]=temp
+
+Y
+```
+
+```
+##      [,1]
+## [1,]    1
+## [2,]    1
+## [3,]    2
+## [4,]    2
+## [5,]    4
+```
+
+```r
+X
+```
+
+```
+##      [,1] [,2] [,3]
+## [1,]    1    1    1
+## [2,]    1    2    2
+## [3,]    1    3    2
+## [4,]    1    4    4
+## [5,]    1    5    3
+```
+
+
+```r
+solve(t(X)%*%X)%*%t(X)%*%Y
+```
+
+```
+##       [,1]
+## [1,]  0.35
+## [2,]  1.15
+## [3,] -0.75
+```
+
+
+```r
+mybeta(X,Y)
+```
+
+```
+##       [,1]
+## [1,]  0.35
+## [2,]  1.15
+## [3,] -0.75
+```
+
+
+```r
+y.lm2=lm(comp~press+temp)
+summary(y.lm2)
+```
+
+```
+## 
+## Call:
+## lm(formula = comp ~ press + temp)
+## 
+## Residuals:
+##     1     2     3     4     5 
+##  0.25 -0.15 -0.30  0.05  0.15 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)  
+## (Intercept)   0.3500     0.3640   0.962   0.4377  
+## press         1.1500     0.1803   6.379   0.0237 *
+## temp         -0.7500     0.2500  -3.000   0.0955 .
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.3162 on 2 degrees of freedom
+## Multiple R-squared:  0.9667,	Adjusted R-squared:  0.9333 
+## F-statistic:    29 on 2 and 2 DF,  p-value: 0.03333
+```
+The beta estimates agree.
+
+# Task 7
+
+
+
+
+```r
+#dependent is a matrix with nrow=N and ncol=number of dependent variables
+#if number of dependent variables is 1, dependent can be a vector
+#independent is a vector with length N
+#Where N is the number of data points
+mybetafromdata=function(dependent,independent){
+  if(is.null(dim(dependent))){
+    #dependent is a vector
+    numdependent=1
+    N=length(dependent)
+  } else {
+    #dependent is a matrix
+    N=dim(dependent)[1]
+    numdependent=dim(dependent)[2]
+  }
+
+  
+  #create design matrix
+  X=matrix(,nrow=N,ncol=numdependent+1)
+  
+  X[,1]=1
+  
+  for(i in 1:numdependent){
+    if(numdependent==1){
+      #dependent is a vector
+      X[,i+1]=dependent
+    } else{
+      X[,i+1]=dependent[,i]
+    }
+
+  }
+  
+  Y=matrix(,nrow=N,ncol=1)
+  Y[,1]=independent
+  
+  
+  #calculate betahat
+  
+  betahat=solve(t(X)%*%X)%*%t(X)%*%Y
+
+  
+  #plot (if 1 or 2 dependent variables)
+  
+  if(numdependent==1){
+    plot(dependent,independent,type="p")
+    min=min(dependent)
+    max=max(dependent)
+
+    x_plot=seq(min,max,by=(max-min)/100)
+    lines(x_plot,betahat[1]+betahat[2]*x_plot)
+  }
+  if(numdependent==2){
+    #contour plot
+    xmin=min(dependent[,1])
+    xmax=max(dependent[,1])
+    ymin=min(dependent[,2])
+    ymax=max(dependent[,2])
+    x_plot=seq(xmin,xmax,by=(xmax-xmin)/100)
+    y_plot=seq(ymin,ymax,by=(ymax-ymin)/100)
+    
+    z_matrix=matrix(,nrow=length(x_plot),ncol=length(y_plot))
+    for(i in 1:length(x_plot)){
+      for(j in 1:length(y_plot)){
+        x_val=x_plot[i]
+        y_val=x_plot[j]
+        z_matrix[i,j]=betahat[1]+betahat[2]*x_val+betahat[3]*y_val
+      }
+    }
+
+    filled.contour(x=x_plot,y=y_plot,z=z_matrix)
+    #color=colormap(z=independent)
+    #points(dependent[,1],dependent[,2])
+
+    #p<-plot_ly(x=x_plot,y=y_plot,z=z_matrix,type="contour")#%>%
+      #add_trace(x=dependent[,1],y=dependent[,2],type="scatter")
+    #p
+    
+  }
+  
+  #If more than 2 dependent variables, plot all combinations of contours
+  
+  
+  #return list with data and betahat
+  
+  return(list(betahat=betahat,dependent_data=dependent,independent_data=independent))
+  
+}
+```
+
+
+```r
+#first let's try 1 dependent variable
+dependent=press
+independent=comp
+vals=mybetafromdata(dependent,independent)
+```
+
+![](Lab3_Dabbieri_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
+```r
+vals
+```
+
+```
+## $betahat
+##      [,1]
+## [1,] -0.1
+## [2,]  0.7
+## 
+## $dependent_data
+## [1] 1 2 3 4 5
+## 
+## $independent_data
+## [1] 1 1 2 2 4
+```
+
+
+```r
+# Next two dependent variables
+dependent=matrix(,nrow=length(comp),ncol=2)
+dependent[,1]=press
+dependent[,2]=temp
+independent=comp
+mybetafromdata(dependent,independent)
+```
+
+![](Lab3_Dabbieri_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+```
+## $betahat
+##       [,1]
+## [1,]  0.35
+## [2,]  1.15
+## [3,] -0.75
+## 
+## $dependent_data
+##      [,1] [,2]
+## [1,]    1    1
+## [2,]    2    2
+## [3,]    3    2
+## [4,]    4    4
+## [5,]    5    3
+## 
+## $independent_data
+## [1] 1 1 2 2 4
+```
+
