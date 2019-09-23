@@ -1,0 +1,118 @@
+---
+title: "Package Making"
+author: "Wayne Stewart"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: true
+    theme: darkly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Introduction
+
+Making your own package will teach you many skills but probably the most useful end will be the ability to record and document your own functions so that they can be shared and esily refined.
+
+The language used to make R packages is called Rd (R documentation) this system uses a series of tags (similar to Latex) which make the documentation.
+
+Below is an example:
+```{r Rdfile,eval=FALSE}
+% File src/library/base/man/load.Rd
+\name{load}
+\alias{load}
+\title{Reload Saved Datasets}
+\description{
+  Reload the datasets written to a file with the function
+  \code{save}.
+}
+\usage{
+load(file, envir = parent.frame())
+}
+\arguments{
+  \item{file}{a connection or a character string giving the
+    name of the file to load.}
+  \item{envir}{the environment where the data should be
+    loaded.}
+}
+\seealso{
+  \code{\link{save}}.
+}
+\examples{
+## save all data
+save(list = ls(), file= "all.RData")
+
+## restore the saved values to the current environment
+load("all.RData")
+
+## restore the saved values to the workspace
+load("all.RData", .GlobalEnv)
+}
+\keyword{file}
+```
+
+
+This is way too much to learn so we will use a package called Roxygen2 to make life easier.
+
+The package allows us to put the documentation in with R function and then separates the documentation and code and forms .Rd files as needed when we build the package
+
+You can learn about package building with Roxygen2 here:
+
+<http://r-pkgs.had.co.nz/man.html>
+
+# ILAS 
+
+>Please download the `ILAS2019.zip` file from CANVAS and unzip it to your labs folder.
+
+Inside the root folder you can see an `ILAS2019.Rproj` file. Double click this icon and the package will be loaded into RStudio where it can be edited, maintained and rebuilt.
+
+This package has dependencies.
+
+Look at the `DESCRIPTION` file:
+
+```{r IMPORTS,eval=FALSE}
+Package: ILAS2019
+Type: Package
+Title: Introduction to Multivariate statistics
+Version: 0.1.0
+Author: Wayne Stewart
+Maintainer: The package maintainer <wayne.s.stewart@ou.edu>
+Description: This package helps present introductory ideas 
+    related to PCA.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.1
+Imports: ellipse, mvtnorm
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+
+```
+
+Notice the line `Imports: ellipse, mvtnorm` -- please install these packages using RStudio.
+
+You will also need the latest `devtools` package.
+
+Also install (NOT an R package but separate program) `Rtools`
+
+<https://cran.r-project.org/bin/windows/Rtools/Rtools35.exe>
+
+# Install and Restart
+
+You are now ready to create the package.
+Click the top right hand button `Install and Restart` 
+
+
+
+![Install and Restart](install-restart-rstudio.png){ width=70% }
+
+
+# Use existing files as templates
+
+You can use the existing files inside the `R`  folder as templates.
+Be careful because Roxygen respects spaces. Don't make too many changes before installing and restarting.

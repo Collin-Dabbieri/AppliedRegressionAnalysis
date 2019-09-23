@@ -1,0 +1,335 @@
+---
+title: "MATH 4773/5773: Project 1"
+author: "Collin Dabbieri"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: show
+    csl: biomed-central.csl
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    number_sections: yes
+    theme: journal
+    toc: yes
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+  pdf_document:
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+bibliography: project.bib
+abstract: Data was collected on the Foliage Intersection Axes (FIA) at a nappe in Pennsylvania and a nappe in Maryland. The objective of the analysis of this data is to determine whether the FIA is dependent on the location of the nappe. Theory behind a $\chi^2$ test for independence and a fisher exact test for independence is given and both tests are carried out for the data. Additionally, the assumptions for both tests are checked for validity given the data. The tests do not give significant evidence that the FIA is dependent on the location of the nappe.
+---
+
+<center>
+
+![Collin Dabbieri](Photo.jpeg "My Picture"){ width=20% }
+
+</center>
+
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction to the data
+
+The data contains research results on the formation of oroclines (curved mountain belts) in the central Appalachian mountains. The study compared two nappes (sheets of rock that have moved over a large horizontal distance), one in Pennsylvania and one in Maryland. At each location, rock samples were collected and the foliation intersection axes (FIA) were measured for each. The goal of my study is to determine whether the distribution of FIA trends are dependent on the location of the nappe.
+
+## Data and variables(see MS pg. 459 etc)
+Describe the data and the problem we wish to investigate. Make sure you give the table or tables you wish to analyze.
+
+```{r}
+orocline=matrix(c(20,17,10,6,10,7),nrow=3,ncol=2)
+rownames(orocline)=c("0-70 degrees","80-149 degrees","150-179 degrees")
+colnames(orocline)=c("Pennsylvania Nappe","Maryland Nappe")
+orocline
+```
+
+The goal is to determine whether the FIA is dependent on the location of the Nappe using a $\chi^2$ test for independence. We will also look at an exact test for independence.
+
+## Make plots and summaries
+This will further help in describing the data and the problem you wish to solve
+
+```{r}
+par(mfrow=c(2,1))
+barplot(orocline[,1],main="Pennsylvania Nappe",ylim = c(0,20))
+barplot(orocline[,2],main="Maryland Nappe",ylim=c(0,10))
+```
+
+
+# Describe the theory you will use
+
+
+We have n=70 observations of k=(2)(3)=6 categories. We aim to determine whether the two classifications, location of the nappe and FIA, are dependent. @MendenhallWilliamM2016Sfea state that $\chi^2$ functions as a test statistic for independence of a contingency table where, when n is large, the equation
+
+$$
+\begin{eqnarray}
+\chi^2=\sum_{j=1}^c\sum_{i=1}^r \frac{[n_{ij}-\hat{E}(n_{ij})]^2}{\hat{E}(n_{ij})}
+\end{eqnarray}
+$$
+will have approximately a $\chi^2$ distribution. The expectation value for any cell is given by
+
+$$
+\begin{eqnarray}
+\hat{E}(n_{ij})=n\hat{p}_{i*}\hat{p}_{*j} \\
+\hat{E}(n_{ij})=n\frac{n_{i*}}{n}\frac{n_{*j}}{n} \\
+\hat{E}(n_{ij})=\frac{n_{i*}n_{*j}}{n}
+\end{eqnarray}
+$$
+
+Which is equal to the row i total times the column j total, divided by the total number of observations.
+
+This gives us a $\chi^2$ test statistic of 
+
+$$\chi^2=\sum_{j=1}^c\sum_{i=1}^r \frac{(n_{ij}-\frac{n_{i*}n_{*j}}{n})^2}{\frac{n_{i*}n_{*j}}{n}}$$
+
+The rejection region for the test is given by $\chi^2> \chi^2_\alpha$, represented by the following figure
+
+```{r}
+#library(latex2exp)
+x=seq(0,15,length.out=1000)
+
+y=dchisq(x,df=5)
+plot(x,y,type="l",xlab=expression(chi^2),ylab="",xaxt='n',yaxt='n')
+
+
+#build array for polygon
+x_poly=c()
+y_poly=c()
+
+x_poly=append(x_poly,10)
+y_poly=append(y_poly,0)
+for(i in 1:1000){
+  x_val=10.+5.*(i/1000.)
+  x_poly=append(x_poly,x_val)
+  
+  y_val=dchisq(x_val,df=5)
+  y_poly=append(y_poly,y_val)
+}
+
+x_poly=append(x_poly,15)
+y_poly=append(y_poly,0)
+
+polygon(x=x_poly,y_poly,col="red")
+
+
+
+text(x=10,y=0.05,labels=expression(chi^2))
+text(x=10.3,y=0.045,labels=expression(alpha))
+text(x=11,y=0.01,labels=expression(alpha))
+text(x=4,y=0.07,labels=expression(1-alpha))
+```
+
+Where the shaded region is the rejection region. Here the NULL hypothesis is that the two classifications are independent, so if we are in the rejection region we have evidence that suggests the two are dependent.
+
+Finally, the degrees of freedom for $\chi^2$ is given by $df=(r-1)(c-1)$. All of the above theory is found in @MendenhallWilliamM2016Sfea.
+
+
+
+Next, there exists an exact test for independence, given by @fisher1925statistical. For a Fisher exact test, the NULL hypothesis is again that the two classifications are independent. We determine the p-value by fixing the marginal totals and calculating the probability of each potential cell, so if our observed table looks like
+
+```{r}
+tab=matrix(c(6,1,7,1,1,2,7,2,9),nrow=3,ncol=3)
+rownames(tab)=c("A1","A2","Total")
+colnames(tab)=c("B1","B2","Total")
+
+tab
+```
+
+There would be three potential tables that keep the marginal totals fixed, they would be the observed table, then
+
+```{r}
+tab=matrix(c(5,2,7,2,0,2,7,2,9),nrow=3,ncol=3)
+rownames(tab)=c("A1","A2","Total")
+colnames(tab)=c("B1","B2","Total")
+
+tab
+```
+
+And finally
+
+```{r}
+tab=matrix(c(7,0,7,0,2,2,7,2,9),nrow=3,ncol=3)
+rownames(tab)=c("A1","A2","Total")
+colnames(tab)=c("B1","B2","Total")
+
+tab
+```
+
+
+The probability of a given table is given by the hypergeometric distribution and the assumption that the NULL hypothesis is correct, so the probability of the observed table above is 
+
+```{r}
+dhyper(1,2,7,2)
+```
+
+The probability of the first theoretical table is
+
+```{r}
+dhyper(0,2,7,2)
+```
+
+and finally the probability of the second theoretical table is
+
+```{r}
+dhyper(2,2,7,2)
+```
+
+To get the p-value for the fisher exact test, for a two-sided test, we sum the probabilities less than or equal to the observed probability
+
+```{r}
+p_value=0.389+0.028
+p_value
+```
+
+In this example case, we do not have evidence to reject the NULL hypothesis that the two categories are independent.
+
+# Test for Independence
+
+We will use both the $\chi^2$ test and the Fisher exact test to see if we can reject the NULL hypothesis, that the two categories are independent, as implausible at a 95% confidence level.
+
+## $\chi^2$ Test
+
+```{r}
+taborocline=as.table(orocline)
+chisq.test(taborocline,correct=FALSE)
+```
+
+The $\chi^2$ test states that we do not have evidence to reject the NULL hypothesis at the 95% confidence level. According to this test, we do not have evidence that the two classifications are dependent.
+
+## Fisher Exact Test
+
+```{r}
+fisher.test(taborocline)
+```
+The Fisher exact test also states that we do not have evidence to reject the NULL hypothesis at the 95% confidence level. Again we do not have evidence that the two classifications are dependent.
+
+# Check assumptions
+
+Both the Fisher exact test and the $\chi^2$ test assume the n observed counts are a random sample of the population of interest. We can assume this is true of the data.
+
+The $\chi^2$ test also requires that the estimated expected counts be greater than or equal to 5 in all cells, for the $\chi^2$ approximation to be valid. As we stated above, the expected counts of a given cell is given by
+
+$$\hat{E}(n_{ij})=\frac{n_{i*}n_{*j}}{n}$$
+We'll test this assumption for each of our 6 cell entries.
+
+```{r}
+orocline
+```
+
+
+First for the top left (Pennsylvania,0-70 degrees)
+
+```{r}
+En11=(20+6)*(20+17+10)/70
+En11
+```
+
+Next for the top right (Maryland,0-70 degrees)
+
+```{r}
+En12=(20+6)*(6+10+7)/70
+En12
+```
+
+Next for the middle left (Pennsylvania, 80-149 degrees)
+```{r}
+En21=(17+10)*(20+17+10)/70
+En21
+```
+
+Next for the middle right (Maryland, 80-149 degrees)
+
+```{r}
+En22=(17+10)*(6+10+7)/70
+En22
+```
+
+Next for the bottom left (Pennsylvania, 150-179 degrees)
+```{r}
+En31=(10+7)*(20+17+10)/70
+En31
+```
+
+And finally for the bottom right (Maryland, 150-179 degrees)
+
+```{r}
+En32=(10+7)*(6+10+7)/70
+En32
+```
+
+The estimated expected counts are greater than 5 for all cells, so this assumption is also valid.
+
+# Make plots
+
+Given our $\chi^2$ value from the $\chi^2$ test, we can plot a $\chi^2$ distribution and see how close we were to the rejection region.
+
+```{r}
+#chisq=1.8745
+#df=2
+#p-value=0.3917
+
+chisqalpha=qchisq(0.95,df=2)
+
+
+x=seq(0,10,length.out=1000)
+y=dchisq(x,df=2)
+
+#build array for polygon
+x_poly=c()
+y_poly=c()
+
+x_poly=append(x_poly,chisqalpha)
+y_poly=append(y_poly,0)
+for(i in 1:1000){
+  x_val=chisqalpha+(10-chisqalpha)*(i/1000.)
+  x_poly=append(x_poly,x_val)
+  
+  y_val=dchisq(x_val,df=2)
+  y_poly=append(y_poly,y_val)
+}
+
+x_poly=append(x_poly,10)
+y_poly=append(y_poly,0)
+
+
+
+plot(x,y,type="l",xlab=expression(chi^2),ylab="Density")
+lines(x=c(1.8745,1.8745),y=c(0,dchisq(1.8745,df=2)),col="blue")
+polygon(x=x_poly,y_poly,col="red")
+#abline(v=1.8745,col="blue")
+text(x=chisqalpha,y=0.10,labels=expression(chi^2))
+text(x=chisqalpha+0.1,y=0.08,labels=expression(alpha))
+#text(x=11,y=0.01,labels=expression(alpha))
+text(x=1.8745,y=0.25,labels=expression(chi^2))
+text(x=2.55,y=0.23,labels="Observed")
+
+```
+We can also look at confidence intervals for individual proportions
+
+```{r}
+library(s20x)
+layout20x(numRows=2,numCols=1)
+ff=freq1way(orocline[,1])
+ff2=freq1way(orocline[,2])
+```
+
+
+# Conclusion
+
+Both the $\chi^2$ test and the Fisher exact test suggest that the distribution of FIA trends are the same for the Pennsylvania nappe and Maryland nappe locations.
+
+
+
+# References

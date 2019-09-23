@@ -1,0 +1,87 @@
+---
+title: "MATH 4773/5773: Project 1"
+author: "Dr. Wayne Stewart"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: show
+    csl: biomed-central.csl
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    number_sections: yes
+    theme: journal
+    toc: yes
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '4'
+  pdf_document:
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+bibliography: project.bib
+abstract: This project is all about analysing tables. You can choose data from Chapter 9. Specifically you must choose data that results in a 2 way table. Give a summary of the analysis here once you have completed the rest.
+---
+
+<center>
+
+![Dr. Wayne Stewart](wayne.jpg "My Picture"){ width=20% }
+
+</center>
+
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction to the data
+Give a detailed talk about the data and the objective of your study.
+
+
+
+## Data and variables(see MS pg. 459 etc)
+Describe the data and the problem we wish to investigate. Make sure you give the table or tables you wish to analyze.
+
+## Make plots and summaries
+This will further help in describing the data and the problem you wish to solve
+
+# Describe the theory you will use
+
+Use $\LaTeX$ and give the relevant equations with descriptions.
+
+Latex Example: See (http://www.stat.cmu.edu/~cshalizi/rmarkdown/#elements-of-math-mode)
+
+
+You must make at least 3 quotes from literature using bibtex.
+Example: [@millar] shows how to use classical methods etc.
+
+$$
+\begin{eqnarray}
+P(|X-\mu| > k) & = & P(|X-\mu|^2 > k^2)\\
+& \leq & \frac{\mathbb{E}\left[|X-\mu|^2\right]}{k^2}\\
+& \leq & \frac{\mathrm{Var}[X]}{k^2}
+\end{eqnarray}
+$$
+
+# Check assumptions
+
+
+# Make plots
+
+These will be used in solving the problem at hand -- use `library(s20x)` or any other packages useful.
+
+# Conclusion
+
+
+
+
+
+#References

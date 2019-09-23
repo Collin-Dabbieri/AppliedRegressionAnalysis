@@ -1,0 +1,286 @@
+---
+title: "Laboratory 4"
+author: "Collin Dabbieri"
+date: "9/20/2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+# Task 1
+
+```{r}
+getwd()
+```
+
+
+# Task 2
+
+```{r}
+library(readxl)
+
+bubble=read_excel("/home/collindabbieri/Documents/AppliedRegressionAnalysis/Dataxls/Excel/BUBBLE2.xls")
+
+head(bubble)
+```
+
+
+# Task 3
+
+## Describe the data
+
+The industry cooling application called subcooled flow boiling is susceptible to small bubbles near the heated surface. In a series of experiments, two important bubble behaviors, diameter and density, were measured. The mass flux and heat flux were varied for each experiment.
+
+## create $(X'X)^{-1}$
+
+```{r}
+X=matrix(nrow=length(bubble$MassFlux),ncol=3)
+X[,1]=1
+X[,2]=bubble$MassFlux
+X[,3]=bubble$HeatFlux
+
+C=solve(t(X)%*%X)
+
+print(C)
+
+```
+
+## Using Theorem 11.1 and assuming $\sigma^2=100$ find $\sigma^2_{\hat{\beta}_i}$
+
+Theorem 11.1- The sampling distribution of $\hat{\beta}_i(i=0,1,2,...,k)$ is normal with $E(\hat{\beta}_i)=\beta_i$, $V(\hat{\beta}_i)=c_{ii}\sigma^2$, $\sigma_{\hat{\beta}_i}=\sigma\sqrt{c_{ii}}$
+
+We know that $\sigma^2=100$, all we need to calculate is $c_{ii}$, and then $\sigma^2_{\hat{\beta}_i}=\sigma^2c_{ii}$
+
+```{r}
+sigma2betahat=matrix(,nrow=3,ncol=1)
+for(i in 1:3){
+  val=100*C[i,i]
+  sigma2betahat[i,1]=val
+}
+print(sigma2betahat)
+```
+
+## Using the same theorem, find SSE
+
+$SSE=Y'Y-\hat{\beta}'X'Y$
+
+For this problem, y is the bubble diameter
+
+```{r}
+Y=matrix(data=bubble$Diameter,nrow=length(bubble$Diameter),ncol=1)
+
+```
+
+
+We need to find $\hat{\beta}$
+
+```{r}
+fit=lm(Y~bubble$MassFlux+bubble$HeatFlux)
+summary(fit)
+print(fit$coefficients)
+```
+
+
+```{r}
+betahat=matrix(data=c(1.0884141,-0.0002343,-0.0800181),nrow=3,ncol=1)
+
+SSE=t(Y)%*%Y-t(betahat)%*%t(X)%*%Y
+SSE
+```
+
+
+# Task 4
+
+## Using the model in 11.6 part b) (Y is bubble density) and Theorem 11.2, find 95% CIs for all three betas
+
+Theorem 11.2- $\chi^2=\frac{SSE}{\sigma^2}$ has a chi-square distribution with $\nu=n-(k+1)$ degrees of freedom
+
+
+a $100(1-\alpha)$% CI for $\beta$ comes from
+
+$$ a'\hat{\beta} \pm t_{\alpha/2}s\sqrt{a'(X'X)^{-1}a} $$
+where $a'\hat{\beta}$ gives any linear combination of $\hat{\beta}$
+
+
+now we can find our CIs
+
+```{r}
+Y=matrix(data=bubble$Density,nrow=length(bubble$Density),ncol=1)
+fit2=lm(Y~bubble$MassFlux+bubble$HeatFlux)
+coef=fit2$coefficients
+print(coef)
+betahat=matrix(data=c(coef[1],coef[2],coef[3]),nrow=3,ncol=1)
+n=length(bubble$MassFlux)
+k=3
+df=n-(k+1)
+SSE=t(Y)%*%Y-t(betahat)%*%t(X)%*%Y
+s=sqrt(SSE/(n-k))
+pm=c(-1,1)
+alpha=0.05
+
+CIs=matrix(,nrow=3,ncol=2)
+
+for(i in 1:3){
+  a=matrix(data=c(0,0,0),nrow=3,ncol=1)
+  a[i,1]=1
+  
+  val=t(a)%*%betahat+pm*qt(1-alpha/2,df)*s*sqrt(t(a)%*%solve(t(X)%*%X)%*%a)
+  CIs[i,1]=val[1]
+  CIs[i,2]=val[2]
+}
+rownames(CIs)=c("beta0","beta1","beta2")
+print("95% Confidence interval for the betas is")
+CIs
+```
+
+## What do you conclude for the testing of the $\beta_i$s, i.e $H_0:\beta_i=0$
+
+We can't reject the NULL, that any of the $\beta$s are equal to zero, as implausible at the 95% confidence level. Our 95% confidence interval for $\beta_0$ includes 0. However, each of the dependent variables seem to be important at the 95% confidence level.
+
+## Create the appropriate summary information from R for the above test
+
+```{r}
+summary(fit2)
+```
+
+
+# Task 5
+
+
+## Make a 3D plot for the data with Y=diameter
+
+
+```{r}
+library(rgl)
+lim <- function(x){c(-max(abs(x)), max(abs(x))) * 1.1}
+
+
+z=bubble$Diameter
+x=bubble$MassFlux
+y=bubble$HeatFlux
+
+x1=(x-min(x))/(max(x)-min(x))
+y1=(y-min(y))/(max(y)-min(y))
+z1=(z-min(z))/(max(z)-min(z))
+fit=lm(z1~x1+y1)
+
+plotids <- plot3d(x1,y1,z1,col="blue")
+rgl.lines(lim(x1), c(0, 0), c(0, 0), color = "black")
+rgl.lines(c(0, 0), lim(y1), c(0, 0), color = "red")
+rgl.lines(c(0, 0), c(0, 0), lim(z1), color = "green")
+coeffs=coef(fit)
+print(coeffs)
+a=coeffs["x1"]
+b=coeffs["y1"]
+c=-1
+d=coeffs["(Intercept)"]
+planes3d(a,b,c,d,alpha=0.5,color="purple")
+rglwidget()
+
+```
+
+
+## Do the same with Y=density
+
+```{r}
+
+
+z=bubble$Density
+x=bubble$MassFlux
+y=bubble$HeatFlux
+
+x1=(x-min(x))/(max(x)-min(x))
+y1=(y-min(y))/(max(y)-min(y))
+z1=(z-min(z))/(max(z)-min(z))
+fit=lm(z1~x1+y1)
+coeffs=coef(fit)
+print(coeffs)
+a=coeffs["x1"]
+b=coeffs["y1"]
+c=-1
+d=coeffs["(Intercept)"]
+
+
+plotids <- plot3d(x1,y1,z1,col="blue")
+rgl.lines(lim(x1), c(0, 0), c(0, 0), color = "black")
+rgl.lines(c(0, 0), lim(y1), c(0, 0), color = "red")
+rgl.lines(c(0, 0), c(0, 0), lim(z1), color = "green")
+planes3d(a,b,c,d,alpha=0.5,color="purple")
+rglwidget()
+
+
+```
+
+
+# Task 6
+
+```{r}
+library(rgl)
+myreg=function(Y,X,alpha){
+  #X has shape nx3
+  
+  k=ncol(X)-1
+  n=nrow(X)
+
+  fit2=lm(Y~X[,2]+X[,3])
+  coef=fit2$coefficients
+  betahat=matrix(data=c(coef[1],coef[2],coef[3]),nrow=3,ncol=1)
+  df=n-(k+1)
+  SSE=t(Y)%*%Y-t(betahat)%*%t(X)%*%Y
+  s=sqrt(SSE/n-k)
+  s2=SSE/(n-k)
+  pm=c(-1,1)
+  alpha=0.05
+
+  CIs=matrix(,nrow=3,ncol=2)
+
+  for(i in 1:3){
+    a=matrix(data=c(0,0,0),nrow=3,ncol=1)
+    a[i,1]=1
+  
+    val=t(a)%*%betahat+pm*qt(1-alpha/2,df)*s*sqrt(t(a)%*%solve(t(X)%*%X)%*%a)
+    CIs[i,1]=val[1]
+    CIs[i,2]=val[2]
+  }
+  rownames(CIs)=c("beta0","beta1","beta2")
+  
+  #rgl plot with points and regression plane
+  lim <- function(x){c(-max(abs(x)), max(abs(x))) * 1.1}
+  x=X[,2]
+  y=X[,3]
+  z=Y
+  
+  x1=(x-min(x))/(max(x)-min(x))
+  y1=(y-min(y))/(max(y)-min(y))
+  z1=(z-min(z))/(max(z)-min(z))
+  fit=lm(z1~x1+y1)
+  coeffs=coef(fit)
+  a=coeffs["x1"]
+  b=coeffs["y1"]
+  c=-1
+  d=coeffs["(Intercept)"]
+
+  plotids <- plot3d(x1,y1,z1,col="blue")
+  rgl.lines(lim(x1), c(0, 0), c(0, 0), color = "black")
+  rgl.lines(c(0, 0), lim(y1), c(0, 0), color = "red")
+  rgl.lines(c(0, 0), c(0, 0), lim(z1), color = "green")
+  planes3d(a,b,c,d,alpha=0.5,color="purple")
+  #rglwidget()
+  
+  return(list(CIs=CIs,betahat=betahat,SSE=SSE,s2=s2))
+}
+
+Y=matrix(data=bubble$Density,nrow=length(bubble$Density),ncol=1)
+myreg(Y,X,0.05)
+rglwidget()
+
+```
+
