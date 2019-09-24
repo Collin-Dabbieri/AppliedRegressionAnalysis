@@ -1,0 +1,122 @@
+---
+title: "Laboratory 5"
+author: "Collin Dabbieri"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# My functions {.tabset .tabset-pills .tabset-fade}
+
+## Function 1
+
+## Function 2
+
+
+# Task 1
+
+```{r}
+getwd()
+```
+
+
+# Task 2 {.tabset .tabset-pills .tabset-fade}
+
+```{r}
+library(readxl)
+
+clerical=read_excel("../../Dataxls/Excel/CLERICAL.XLS")
+head(clerical)
+```
+
+Replace the first 4 entries in the column "X5-Checks" with c(600,500,1000,900) 
+
+```{r}
+print(clerical$`X5-Checks`[1:4])
+clerical$`X5-Checks`[1:4]=c(600,500,1000,900)
+print(clerical$`X5-Checks`[1:4])
+```
+
+## A
+
+## B
+
+## C
+
+## D
+
+## E
+
+## F
+
+## G
+
+# Task 3
+
+Using Theorem 11.3 page 574, make a function myl() that produces
+
+-(1-$\alpha$)100% confidence intervals for E(l) given Y, X, $\alpha$, a, l
+-a plot using pairs() to show all pairwise plots of the data used in the analysis
+
+```{r mylfunction}
+myl=function(Y,X,alpha,a,l){
+  
+  #a'betahat +- t s sqrt(a'(X'X)^-1 a)
+  betahat=
+  
+}
+```
+
+
+Using the modified CLERICAL data with $\alpha=0.05$, and a such that $E(l)=\beta_1-\beta_2$ call your function and place output here
+
+```{r}
+Y=
+X=
+a=
+alpha=0.05
+betahat=
+l=t(a)%*%betahat
+ci=myl(Y,X,alpha,a,l)
+```
+
+
+Interpret the confidence interval that your function produces
+
+The confidence interval is `r ci`
+
+# Task 5
+
+Find a 95% ci for E(Y) when the x variables take the second row of the design matrix
+
+
+What is the exact expression for a?
+
+```{r}
+a=matrix(data=c(0,1,0,0,0,0,0,0,0),nrow=9,ncol=1)
+a
+```
+
+
+Use your function and page 575, place output here
+
+```{r}
+ci=myl(Y,X,alpha,a,l)
+```
+
+Interpret the confidence interval - be careful!
+
+
+# Task 6
+
+
+
+
+

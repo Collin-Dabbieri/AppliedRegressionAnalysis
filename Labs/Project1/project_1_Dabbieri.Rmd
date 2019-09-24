@@ -68,6 +68,16 @@ barplot(orocline[,2],main="Maryland Nappe",ylim=c(0,10))
 ```
 
 
+```{r}
+library(s20x)
+tabrowdist=as.table(matrix(data=c(20,17,10,47,6,10,7,23,26,27,17,70),nrow=4,ncol=3))
+taborocline=as.table(orocline)
+rowdistr(taborocline,comp="within")
+```
+
+
+Looking at the individual FIA categories, only 0-70 degrees seems to have a significant difference in proportion. The confidence intervals for the difference in the other two categories contain 0. We'll see later whether or not this is significant enough to claim dependence of the FIA and location.
+
 # Describe the theory you will use
 
 
@@ -199,6 +209,8 @@ In this example case, we do not have evidence to reject the NULL hypothesis that
 
 We will use both the $\chi^2$ test and the Fisher exact test to see if we can reject the NULL hypothesis, that the two categories are independent, as implausible at a 95% confidence level.
 
+
+
 ## $\chi^2$ Test
 
 ```{r}
@@ -316,6 +328,7 @@ text(x=1.8745,y=0.25,labels=expression(chi^2))
 text(x=2.55,y=0.23,labels="Observed")
 
 ```
+
 We can also look at confidence intervals for individual proportions
 
 ```{r}
@@ -324,6 +337,8 @@ layout20x(numRows=2,numCols=1)
 ff=freq1way(orocline[,1])
 ff2=freq1way(orocline[,2])
 ```
+
+Given the size of these confidence intervals, and the relatively small difference in the observed proportions at each level, we can see how we are unable to conclude that there is a dependence with respect to the two classifications (FIA and location of the nappe).
 
 
 # Conclusion
