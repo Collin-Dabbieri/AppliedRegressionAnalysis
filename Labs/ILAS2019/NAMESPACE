@@ -2,5 +2,8 @@
 
 export(bullseye)
 export(mvmat)
+export(myCIforl)
 export(myfun)
+export(myl)
 export(mynewt)
+export(myy)

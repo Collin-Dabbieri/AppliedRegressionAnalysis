@@ -23,6 +23,9 @@ Plots a bull's eye target
 \description{
 This function shows how unbiased estimators work
 }
+\details{
+This paragraph can be used for more details of the function
+}
 \examples{
 bullseye()
 }
