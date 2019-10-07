@@ -1,0 +1,256 @@
+---
+title: "Lab 6"
+author: "Collin Dabbieri"
+date: "10/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1
+
+```{r}
+options(warn=-1)
+getwd()
+```
+
+# Task 2
+
+```{r}
+library(readxl)
+
+kwhrs=read_excel("../../Dataxls/Excel/KWHRS.xls")
+head(kwhrs)
+```
+
+
+## a)
+
+Construct a scatterplot for the data. Is there evidence to support the use of a quadratic model?
+
+$$y=\beta_0+\beta_1x+\beta_2x^2$$
+
+```{r}
+beta0=-250
+beta1=1.5
+beta2=-0.00025
+x=kwhrs$SIZE
+y=kwhrs$USAGE
+yfit=beta0+beta1*x+beta2*x^2
+plot(x,y,type='p',xlab="Size",ylab="Usage")
+lines(x,yfit)
+```
+
+This data looks like it would be well represented by a quadratic model.
+
+## b)
+
+Use the method of least-squares to estimate the unknown parameters $\beta_0,\beta_1, \beta_2$ in the quadratic model
+
+```{r}
+model=lm(USAGE~SIZE+SIZESQ,data=kwhrs)
+summary(model)
+```
+
+$\hat{\beta_0}=-8.067*10^{2}$
+$\hat{\beta_1}=1.962$
+$\hat{\beta_2}=-3.404*10^{-4}$
+
+## c) 
+
+Graph the prediction equation and assess how well the model fits the data, both visually and numerically
+
+```{r}
+beta0=-8.067e2
+beta1=1.962e0
+beta2=-3.404e-4
+x=kwhrs$SIZE
+y=kwhrs$USAGE
+yfit=beta0+beta1*x+beta2*x^2
+plot(x,y,type='p',xlab="Size",ylab="Usage")
+lines(x,yfit)
+```
+
+Visually, the model fits the data very well. Numerically, the adjusted $R^2$ value of 0.9735 also tells us the model fits the data very well.
+
+## d) 
+
+Interpret the $\beta$ estimates
+
+The estimate for $\beta_0$ can only be interpreted within the range of the data. The fact that $\beta_0$ is less than zero means that there are positive square foot values that will have negative predictions for usage. This is nonsensical, so the predicted y values should only be considered for valid size values.
+
+The negative sign on $\beta_2$ tells us that the fit is concave down. Meaning usage levels off for higher size values.
+
+## e)
+
+Is the overall model useful (at $\alpha=0.01$) for predicting electrical usage y?
+
+Yes, the p-value from the F-test is <0.01, so the model is adequate at the 99% confidence level.
+
+## f) 
+
+Is there sufficient evidence of concave downward curvature in the electrical usage-home size relationship? Test using $\alpha=0.01$
+
+The two-tailed p-value of the T test for $\beta_2$ is significantly less than 0.01. Meaning we have evidence for downward concavity at the 99% confidence level.
+
+# Task 3
+
+How do you check to see if a population variance is likely constant?
+
+Plot residuals vs. $\hat{y}$ if the variance is constant you would expect the residual values to be centered at 0 and have the same spread throughout.
+
+Read in the CLERICAL data set and using the model y~x1+...+x5 recreate the plots shown on pg. 608.
+
+```{r}
+clerical=read_excel("../../Dataxls/Excel/CLERICAL.XLS")
+
+head(clerical)
+```
+
+```{r}
+Y=clerical$`Y-Hours`
+X1=clerical$`X1-Mail`
+X2=clerical$`X2-Gifts`
+X3=clerical$`X3-Charge`
+X4=clerical$`X4-Returns`
+X5=clerical$`X5-Checks`
+
+model=lm(Y~X1+X2+X3+X4+X5)
+r=model$residuals
+fit=model$fitted.values
+n=length(Y)
+k=5
+SSE=sum(r^2)
+s=sqrt(SSE/(n-(k+1)))
+
+
+
+
+plot(X1,r,type="p",xlab="X1",ylab="residuals")
+plot(X2,r,type="p",xlab="X2",ylab="residuals")
+plot(X3,r,type="p",xlab="X3",ylab="residuals")
+plot(X4,r,type="p",xlab="X4",ylab="residuals")
+plot(X5,r,type="p",xlab="X5",ylab="residuals")
+
+```
+
+
+What do they say? What do you conclude?
+
+The data appears to not have constant variance
+
+$St_{resid,i}=\frac{\hat{y_i}-y_i}{s}$
+
+
+```{r}
+tab=matrix(,nrow=52,ncol=7)
+tab[,1]=clerical$Obs
+tab[,2]=clerical$`X1-Mail`
+tab[,3]=clerical$`Y-Hours`
+tab[,4]=fit
+tab[,5]=fit/s
+tab[,6]=r
+tab[,7]=(Y-fit)/(s)
+
+colnames(tab)=c("Obs","X1-Mail","Y-Hours","Fit","SE Fit","Residual","St Resid")
+tab
+
+```
+
+
+
+Create a QQPLOT of the residuals
+
+```{r}
+qqnorm(Y)
+```
+
+
+
+```{r}
+library(s20x)
+
+normcheck(r,shapiro.wilk = TRUE)
+```
+
+At the 95% confidence level, we have evidence against normally distributed residuals.
+
+
+```{r}
+x=clerical$Obs
+plot(x,r,type='p',xlab="Observation Order (Day",ylab="Residual")
+lines(x,r)
+```
+
+
+
+
+# Task 4
+
+For the Jack-Knife procedure, unusually large deleted residuals are those values with absolute value greater than some multiple of s
+
+```{r}
+
+#X can be a matrix where ncols is n and nrows is number of variables
+myinfluential=function(X,Y){
+  deleted_resid=c()
+  high_deleted_resid=c()
+  k=ncol(X)
+  n=nrow(X)
+  model_all=lm(Y~X)
+  r=model_all$residuals
+  SSE=sum(r^2)
+  s=sqrt(SSE/(n-(k+1)))
+  
+  for(i in 1:n){
+    y_val=Y[i]
+    X_trim=X[-i,]
+    Y_trim=Y[-i]
+    model=lm(Y_trim~X_trim)
+    
+    x_pred=X[i,]
+
+    coeff=model$coefficients
+
+    
+    y_pred=coeff[1]+coeff[2]*x_pred[1]+coeff[3]*x_pred[2]+coeff[4]*x_pred[3]+coeff[5]*x_pred[4]+coeff[6]*x_pred[5]
+    names(y_pred)=""
+    
+    if(abs(y_val-y_pred)>3*s){
+      high_deleted_resid=append(high_deleted_resid,TRUE)
+      
+    } else{
+      high_deleted_resid=append(high_deleted_resid,FALSE)
+    }
+    
+    
+    
+    
+    deleted_resid=append(deleted_resid,y_val-y_pred)
+    
+  }
+  
+  final=matrix(,nrow=n,ncol=2)
+  final[,1]=deleted_resid
+  final[,2]=high_deleted_resid
+  colnames(final)=c("deleted_residual","large_deleted_residual")
+  return(list(deleted_resid=data.frame(final)))
+}
+
+n=length(Y)
+k=5
+X=matrix(,nrow=n,ncol=k)
+X[,1]=X1
+X[,2]=X2
+X[,3]=X3
+X[,4]=X4
+X[,5]=X5
+
+deleted_resid=myinfluential(X,Y)
+print(deleted_resid)
+
+```
+
+

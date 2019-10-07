@@ -1,0 +1,153 @@
+---
+title: "Exam 1 R code 2019"
+author: "Collin Dabbieri"
+date: "October 4, 2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+dird="./"
+#my function to read data 
+myread=function(xls){
+  fl=paste0(dird,xls)
+  readxl::read_xls(fl)
+}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Introduction
+
+All answers to Q 1 part e) and all answers to Q 4 a) - e) must be placed in this document -- knitted and then uploaded to CANVAS.
+All files must be in the same working directory. The s20x package will be helpful for both questions. 
+
+# Question 1 part e)
+
+```{r}
+library(readxl)
+irr=read_excel("IRRIGATE.XLS")
+head(irr)
+
+m=as.table(c(17,27,22,15,19))
+m
+```
+
+## a)
+
+```{r}
+chisq.test(m,correct=FALSE)
+```
+
+p-value=0.3546
+## b)
+
+There is not sufficient evidence to rule against the NULL hypothesis that all of the underlying proportions are $\frac{1}{5}$.
+
+## c)
+
+```{r}
+mypipj = function(tab,ni,nj,alpha=0.12) #tab = table
+{
+  total_points=sum(tab)
+  ci_matrix_lower=array(dim=c(length(tab),length(tab)))
+  ci_matrix_upper=array(dim=c(length(tab),length(tab)))
+  pt_est_matrix=array(dim=c(length(tab),length(tab)))
+  z=qnorm(1-alpha/2,0,1)
+  for (i in 1:length(tab)){
+    for (j in 1:length(tab)){
+      if (i==j){
+        
+      }
+      else{
+        pihat=tab[i]/total_points
+        pjhat=tab[j]/total_points
+        pt_est=pihat-pjhat
+        pt_est_matrix[i,j]=pt_est
+      
+        radicand=(pihat*(1-pihat)+pjhat*(1-pjhat)+2*pihat*pjhat)/(total_points)
+        lower=pt_est-z*sqrt(radicand)
+        upper=pt_est+z*sqrt(radicand)
+        ci=c(lower,upper)
+        ci_matrix_lower[i,j]=lower
+        ci_matrix_upper[i,j]=upper
+        
+      }
+
+      
+    }
+    
+  }
+  
+  dimnames(ci_matrix_lower) = list( c("A", "B","C","D","E"),c("A","B","C","D","E"))
+  dimnames(ci_matrix_upper) = list( c("A", "B","C","D","E"),c("A","B","C","D","E")) 
+  dimnames(pt_est_matrix) = list( c("A", "B","C","D","E"),c("A","B","C","D","E"))
+
+  
+  
+  # Now create colored barplot with hypothesis values and sample values
+  num_categories=length(tab)
+  hypoth_val=1./num_categories
+ 
+  
+  true_vals=c()
+  for (i in 1:num_categories){
+    ptemp=tab[i]/total_points
+    true_vals=append(true_vals,ptemp)
+  }
+
+  
+  barplot(rbind(true_vals,hypoth_val),beside=TRUE,legend = c("sample", "hypothesis"),xlab="Categories",ylab="Proportion",col=c('lightblue','magenta'))
+  
+  return(list(ci_lower_bound=ci_matrix_lower,ci_upper_bound=ci_matrix_upper,pt_est=pt_est_matrix))
+  
+}
+
+mypipj(m,ni=27,nj=15)
+```
+
+
+
+## d)
+
+Confidence interval for $p_2-p_4=(0.0209,0.2190)$
+# Question 4
+
+```{r}
+bid=myread("BIDMAINT.XLS")
+#head(bid)
+bid = within(bid,{
+  y<-COST
+  x1<-as.integer(X1)
+  x2<-as.integer(X2)
+})
+bid
+```
+
+
+
+## a)
+
+```{r}
+model=lm(bid$y~bid$X1+bid$X2)
+summary(model)
+```
+Yes, the p-value for the F test is less than 0.05, therefore we can reject the NULL.
+
+## b)
+
+```{r}
+library(s20x)
+ci=ciReg(model)
+```
+
+
+## c)
+Yes, p-value for F test is <0.05, model is adequate
+
+## d)
+168.9
+## e)
+0.04515

@@ -1,0 +1,26 @@
+Chapter 12 and Models
+========================================================
+author: Dr Wayne Stewart
+date: `r Sys.Date()`
+autosize: true
+
+Models
+========================================================
+
+  - Read in the data PRODQUAL.xls
+  - Answer Example 12.3 questions using R - see pg 657 by engaging with the data, R and the problem - or you will learn 0!!! 
+  - Make sure that you make the very best graphical output possible.
+
+Task 3
+========================================================
+
+ - Read and understand pages 592 - 594 (sec 11.8) on interaction.
+ - Reproduce Example 11.11 using R - read and understand the answers in the solution pg 593,4.  
+ - What is the NULL for the global F test?
+ - What is the alternate test in part b) one sided?
+ - Derive the formula in part c) You MUST understand the interpretation!
+
+Task 4
+========================================================
+
+ - Answer question 12.24 on page 660 using the WAFER2 data.
