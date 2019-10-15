@@ -1,7 +1,7 @@
 ---
 title: "Lab 7"
 author: "Collin Dabbieri"
-date: "10/7/2019"
+date: "10/14/2019"
 output: html_document
 ---
 
@@ -10,5 +10,265 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Task 1
+
+```{r}
+getwd()
+```
+
+# Task 2
+
+```{r}
+library(readxl)
+
+prodqual=read_excel("../../Dataxls/Excel/PRODQUAL.XLS")
+head(prodqual)
+
+```
+
+Answer Example 12.3
+
+# a) 
+
+Fit the complete second order model to the data
+
+quality is y
+temp is x1
+pressure is x2
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2+\beta_4x_1^2+\beta_5x_2^2$$
+
+```{r}
+y=prodqual$QUALITY
+x1=prodqual$TEMP
+x2=prodqual$PRESSURE
+
+TEMP2=prodqual$TEMP^2
+PRESS2=prodqual$PRESSURE^2
+
+prodmod=lm(QUALITY~TEMP+PRESSURE+TEMP:PRESSURE+TEMP2+PRESS2,data=prodqual)
+
+summary(prodmod)
+```
+
+
+# b)
+
+Sketch the response surface (3D plot of model fit)
+
+```{r}
+print(min(prodqual$TEMP))
+print(max(prodqual$TEMP))
+print(min(prodqual$PRESSURE))
+print(max(prodqual$PRESSURE))
+```
+```{r}
+print(prodmod$coefficients)
+```
+
+
+```{r}
+library(rgl)
+return_fitval=function(x1,x2){
+  coeff=prodmod$coefficients
+  val=coeff[1]+coeff[2]*x1+coeff[3]*x2+coeff[6]*x1*x2+coeff[4]*x1^2+coeff[5]*x2^2
+  return(val)
+}
+x_plot=c()
+y_plot=c()
+z=c()
+x1_pred=seq(80,100,by=0.1)
+x2_pred=seq(50,60,by=0.1)
+for(i in x1_pred){
+  for(j in x2_pred){
+    val=return_fitval(i,j)
+    x_plot=append(x_plot,i)
+    y_plot=append(y_plot,j)
+    z=append(z,val)
+  }
+}
+
+
+plot3d(x_plot,y_plot,z,type='l',xlab='x1',ylab='x2',zlab='y')
+rglwidget()
+
+```
+
+
+# c)
+
+Test the overall utility of the model (model summary)
+
+```{r}
+summary(prodmod)
+```
+
+The p value for the F test tells us that the model is adequate for explaining the data. 
+
+# Task 3
+
+Reproduce example 11.11 using R
+
+```{r}
+x1=c(120.0,65.0,150.0,1073.8,150.0,610.0,88.2,88.2,88.2,90.0,30.0,441.0,441.0,441.0,441.0,627.0,610.0,150.0,1089.5,125.0,120.0,65.0,150.0,150.0,150.0,150.0,610.0,90.0,30.0,441.0,441.0,441.0,441.0,627.0,610.0,30.0)
+x2=c(375,750,500,2170,325,1500,399,399,399,1140,325,410,410,410,410,1525,1500,500,2170,750,375,750,500,250,500,325,1500,1140,325,410,410,410,410,1525,1500,325)
+y=c(3137,3590,4526,10825,4023,7606,3748,2972,3163,4065,2048,6500,5651,6565,6387,6454,6928,4268,14791,2680,2974,1965,2566,1515,2000,2735,3698,2635,1206,3775,3120,4206,4006,3728,3211,1200)
+
+print(length(x1))
+print(length(x2))
+print(length(y))
+```
+
+
+$$E(y) = \beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2$$
+
+```{r}
+mod2=lm(y~x1+x2+x1:x2)
+```
+
+
+## a)
+Test the overall utility of the model using the global F test at $\alpha=0.05$
+
+```{r}
+summary(mod2)
+```
+The p-value of the F test is significantly less than 0.05, so we can reject the NULL $H_0:\beta_1=\beta_2=\beta_3=0$. Therefore, the model is adequate at the 95% confidence level.
+
+## b)
+Test the hypothesis (at $\alpha=0.05$) that the slope of the relationship between man-hours (y) and boiler capacity (x1) increases as the design pressure (x2) increases. That is, the capacity and pressure interact positively
+
+Using the T-test, we see a one-tailed p-value of 0.0327/2=0.01635, meaning we can reject the NULL that $\beta_3=0$ and claim, with 95% confidence, that the two interact positively.
+
+## c)
+Estimate the change in man-hours (y) for every 1-psi increase in design pressure when boiler capacity is 750.
+
+Estimated $x_2$ slope=$\hat{\beta_2}+\hat{\beta_3}x_1=-1.53+0.003(750)=0.72$
+
+What is the Null for the global F test?
+$H_0: \beta_1=\beta_2=\beta_3=0$
+
+Why is the alternate test in part b) one sided?
+
+The test in part b) is one sided because we are testing for $H_a:\beta_3>0$ instead of $H_a:\beta_3\neq 0$
+
+Derive the formula in part c)
+
+One might naively assume that the slope in $x_2$ is just $\hat{\beta_2}$. However, since interaction is present, the rate of change of man-hours with the design pressure depends on $x_1$. This gives us the equation in c)
+
+# Task 4
+
+Answer question 12.24 pg 660 using the WAFER2 data
+
+```{r}
+wafer=read_excel("../../Dataxls/Excel/WAFER2.xls")
+head(wafer)
+
+```
+
+
+## a)
+
+Write a complete second-order model for polysilicon thickness (y) as a function of oxide thickness (x1) and deposition time (x2)
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2+\beta_4x_1^2+\beta_5x_2^2$$
+
+## b)
+
+Fit the model to the data. Give the least squares prediction equation
+
+```{r}
+OXIDE2=wafer$OXIDE^2
+TIME2=wafer$TIME^2
+wafmod=lm(POLYSIL~OXIDE+TIME+OXIDE:TIME+OXIDE2+TIME2,data=wafer)
+summary(wafmod)
+```
+
+
+## c)
+
+Conduct a test to determine if the quadratic terms in the model are necessary (use $\alpha=0.05$)
+
+Using the p-value from the T statistic, the quadratic term for the oxide appears to be unnecessary.
+
+## d)
+
+Conduct a test to determine if oxide thickness and deposition time interact. Use $\alpha=0.05$
+
+The p-value from the T statistic for the interaction term is significantly less than 0.05. Therefore, we can say with 95% confidence that oxide thickness and deposition time interact.
+
+## e)
+
+Based on your results, parts c) and d), what model modifications do you recommend? Explain.
+
+I would recommend creating a model with the quadratic oxide term removed. This term had the highest p-value of the T statistic, and is not adequate at the 95% confidence level.
+
+# Task 5 
+
+Write a function mysecorder() that will take any xls data in the form of columns x1,x2 and y and perform a full MLR analysis
+
+it needs to:
+Take arguments filename, alpha
+Produce a list containing
+-summary y.lm info
+-Coefficients (pt estimates)
+(1-$\alpha$)100% ci for the betas (use ciReg() in s20x)
+A graph of the estimated trend paraboloid using rgl
+-graph should have data plotted
+-and the paraboloid
+-all axis labelled
+
+
+Use function on WAFER2 and place output here
+
+```{r}
+library(s20x)
+mysecorder=function(filename,alpha=0.05){
+  data=read_excel(filename)
+  x1=unlist(data[,1])
+  x2=unlist(data[,2])
+  y=unlist(data[,3])
+
+  
+  x12=x1^2
+  x22=x2^2
+  
+  model=lm(y~x1+x2+x1:x2+x12+x22)
+  coeff=model$coefficients
+
+
+  
+  cis=ciReg(model,conf.level=1-alpha,print.out=FALSE)
+  
+  x=seq(min(x1),max(x1),length.out=40)
+  y=seq(min(x2),max(x2),length.out=40)
+  
+  x_plot=c()
+  y_plot=c()
+  z=c()
+  
+  for(i in x){
+    for(j in y){
+      val=coeff[1]+coeff[2]*x+coeff[3]*y+coeff[4]*x^2+coeff[5]*y^2+coeff[6]*x*y
+      z=append(z,val)
+      x_plot=append(x_plot,i)
+      y_plot=append(y_plot,j)
+    }
+  }
+  open3d()
+  mfrow3d(2,1)
+  plot3d(x1,x2,y)
+  
+  plot3d(x_plot,y_plot,z,type='l',xlab='x1',ylab='x2',zlab='y')
+
+  
+  return(list(summary=summary(model),coefficients=coeff,cis=cis))
+  
+}
+
+wafmodel=mysecorder("../../Dataxls/Excel/WAFER2.xls")
+rglwidget()
+
+wafmodel
+```
 
 
