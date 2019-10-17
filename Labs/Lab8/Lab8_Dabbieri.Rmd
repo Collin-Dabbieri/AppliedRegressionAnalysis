@@ -1,0 +1,333 @@
+---
+title: "Lab 8"
+author: "Collin Dabbieri"
+date: "10/17/2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Task 1
+
+```{r}
+getwd()
+```
+
+# Task 2
+
+Do example 12.5 in R pg 669, answer parts a and b
+
+```{r}
+Kansas=c(198,126,443,570,286,184,105,216,465,203)
+Kentucky=c(563,314,483,144,585,377,264,185,330,354)
+Texas=c(385,693,266,586,178,773,308,430,644,515)
+x1=c()
+x2=c()
+cost=c()
+for(i in Kansas){
+  x1=append(x1,0)
+  x2=append(x2,0)
+  cost=append(cost,i)
+}
+for(i in Kentucky){
+  x1=append(x1,1)
+  x2=append(x2,0)
+  cost=append(cost,i)
+}
+for(i in Texas){
+  x1=append(x1,0)
+  x2=append(x2,1)
+  cost=append(cost,i)
+}
+head(x1)
+head(x2)
+head(cost)
+
+tail(x1)
+tail(x2)
+tail(cost)
+```
+
+
+## a)
+
+Do the data provide sufficient evidence (at $\alpha=0.05$) to indicate that the mean annual maintenance costs accrued by system users differ for the three state installations
+
+```{r}
+model=lm(cost~x1+x2)
+summary(model)
+```
+
+Because Kansas is our baseline, $\beta_1=\mu_{Kentucky}-\mu_{Kansas}$ and $\beta_2=\mu_{Texas}-\mu_{Kansas}$. The NULL for the F-test is $H_0:\beta_1=\beta_2=0$, plugging in $\beta_1$ and $\beta_2$, $H_0:\mu_{Kentucky}-\mu_{Kansas}=\mu_{Texas}-\mu_{Kansas}$ => $H_0:\mu_{Kentucky}=\mu_{Texas}=\mu_{Kansas}$. So the F test tests the NULL hypothesis that the mean annual maintenance costs accrued are the same for the three locations. Because our p-value is less than 0.05, we can reject the NULL and say with 95% confidence that the mean annual maintenance costs differ for the three state installations.
+
+## b)
+
+Find and interpret a 95% confidence interval for the difference between the mean costs in Texas and Kansas
+
+From a) $\beta_2=\mu_{Texas}-\mu_{Kansas}$, so we need a 95% ci for $\beta_2$.
+
+```{r}
+library(s20x)
+
+ciReg(model)
+```
+
+We can say with 95% confidence that $\beta_2$ lies in the interval (43.172,353.228). We can say with 95% confidence that the mean cost of maintenance in Texas is between 43.17 and 353.23 higher than the mean cost of maintenance in Kansas.
+
+# Task 3
+
+Do example 12.7 pg 678, answer a, b
+
+```{r}
+#x1 is the incentive bonus for each casting
+#x2 is 0 for union plant, 1 for nonunion plant
+x1=c(0.20,0.20,0.20,0.30,0.30,0.30,0.40,0.40,0.40,0.20,0.20,0.20,0.30,0.30,0.30,0.40,0.40,0.40)
+x2=c(0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1)
+y=c(1435,1512,1491,1583,1529,1610,1601,1574,1636,1575,1512,1488,1635,1589,1661,1645,1616,1689)
+
+print(length(x1))
+print(length(x2))
+print(length(y))
+```
+
+
+## a) 
+
+Fit the model to the data and graph the prediction equations for the two productivity lines.
+
+```{r}
+model=lm(y~x1+x2+x1:x2)
+summary(model)
+```
+
+
+```{r}
+print(model$coefficients)
+```
+
+$$\hat{y}=1,365.3+621.7x_1+47.78x_2+3.3x_1x_2$$
+
+The prediction equation for the union plant is
+
+$$\hat{y}_{union}=1,365.3+621.7x_1$$
+
+The prediction equation for the nonunion plant is 
+
+$$\hat{y}_{nonunion}=(\hat{\beta}_0+\hat{\beta_2})+(\hat{\beta_1}+\hat{\beta_3})x_1=1,413.1+625.0x_1$$
+
+```{r}
+x=seq(0.20,0.40,by=0.01)
+plot(x,1365.3+621.7*x,type='l',xlab="Incentive (Dollars)",ylab="Castings")
+lines(x,1413.1+625.0*x,type='b')
+legend(0.34,1520,legend=c("Union","Nonunion"),lty=1:2)
+```
+
+
+## b)
+
+Do the data provide sufficient evidence to indicate that the rate of increase of worker productivity with incentive is different for union and nonunion plants? Test at $\alpha=0.10$.
+
+We want to test $H_0:\beta_3=0$. From the model summary the p-value for the T statistic for the $\beta_3$ term is 0.989, so we fail to reject the NULL hypothesis. The data does not provide sufficient evidence that the rate of increase of worker productivity with incentive is different for union and nonunion plants.
+
+
+
+
+# Task 4
+
+Do example 12.8 pg 680, answer a-c
+
+## a)
+
+Write the equation of the model for E(y) that yields the response curves shown in Fig. 12.25.
+
+$x_1$ is engine speed
+$x_2$ is categorical, with $x_2=1$ if petroleum fuel, 0 if not
+$x_3$ is categorical, with $x_3=1$ if coal fuel, 0 if not
+
+The figure shows a curved relationship between E(y) and engine speed, the three lines for Petroleum, Coal and Blended are not just offset from each other (engine speed and fuel type interact)
+
+This is a quadratic model with interaction between engine speed and fuel type
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_1^2+\beta_3x_2+\beta_4x_3+\beta_5x_1x_2+\beta_6x_1x_3+\beta_7x_1^2x_2+\beta_8x_1^2x_3$$
+
+## b)
+
+Give the equation of the curve for petroleum fuel
+
+Petroleum fuel has $x_2=1,x_3=0$
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_1^2+\beta_3+\beta_5x_1+\beta_7x_1^2$$
+
+$$E(y)=(\beta_0+\beta_3)+(\beta_1+\beta_5)x_1+(\beta_2+\beta_7)x_1^2$$
+
+## c)
+
+How would you determine whether or not the model gives a better prediction of y than the first order model of Example 12.6?
+
+Because a first order model has fewer parameters one could see which model has a better reduced $R^2$, since that includes a penalty for having a more complicated model.
+
+
+# Task 5 
+
+Use the Ftest for nested models (anova() in R) pg 686
+
+
+Reproduce the example 12.9 and produce the necessary output to calculate the F test to compare the two models.
+
+```{r}
+x1=c(80,80,80,80,80,80,80,80,80,90,90,90,90,90,90,90,90,90,100,100,100,100,100,100,100,100,100)
+x2=c(50,50,50,55,55,55,60,60,60,50,50,50,55,55,55,60,60,60,50,50,50,55,55,55,60,60,60)
+y=c(50.8,50.7,49.4,93.7,90.9,90.9,74.5,73.0,71.2,63.4,61.6,63.4,93.8,92.1,97.4,70.9,68.8,71.3,46.6,49.1,46.4,69.8,72.5,73.2,38.7,42.5,41.4)
+
+x12=x1^2
+x22=x2^2
+modelc=lm(y~x1+x2+x1:x2+x12+x22)
+modelr=lm(y~x1+x2+x1:x2)
+```
+
+
+Do the data provide sufficient evidence to indicate that the quadratic terms contribute information for the prediction of y?
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2+\beta_4x_1^2+\beta_5x_2^2$$
+
+We need to test the NULL $H_0:\beta_4=\beta_5=0$
+
+To do this we need a reduced model 
+
+$$E(y)_r=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2$$
+
+Our F statistic is given by
+
+$$F=\frac{\frac{SSE_r-SSE_c}{Number\: of \: \beta 's \:tested\:in\:model}}{MSE_c}$$
+
+Where the number of $\beta$'s tested is the difference of the number of $\beta$'s tested, (k-g)=2
+
+```{r}
+summary(modelc)
+```
+
+
+
+```{r}
+
+resc=modelc$residuals
+resc2=resc^2
+resr=modelr$residuals
+resr2=resr^2
+SSEr=sum(resr2)
+SSEc=sum(resc2)
+MSEc=mean(resc2)
+
+F_val=((SSEr-SSEc)/2)/(MSEc)
+F_val
+qf(0.95,2,21)
+```
+
+For $\alpha=0.05$, the rejection region is given by all F values greater than 3.47. Our F value is much larger than that so we are in the rejection region. Therefore we can reject the NULL $H_0:\beta_4=\beta_5=0$. Meaning the data does provide evidence that the quadratic terms contribute information to the prediction of y.
+
+
+Reproduce the plot page 688
+
+```{r}
+library(latex2exp)
+x=seq(0,8,length.out=100)
+y_plot=c()
+for(i in x){
+  y_plot=append(y_plot,df(i,2,21))
+}
+x_reject=qf(0.95,2,21)
+print(x_reject)
+
+plot(x,y_plot,type='l',ylab="f(F)",xlab='')
+
+curve=seq(x_reject,8,length.out=100)
+x_shade=c(x_reject)
+y_shade=c(0)
+for(i in curve){
+  x_shade=append(x_shade,i)
+  y_shade=append(y_shade,df(i,2,21))
+}
+x_shade=append(x_shade,8)
+y_shade=append(y_shade,0)
+polygon(x_shade,y_shade,col='red')
+text(x=3.7,y=0.2,labels=TeX('$\\alpha = 0.05$'))
+text(3.7,0.3,labels=TeX('$F_{0.05}=3.47(\\nu_1=2,\\nu_2=21)$'))
+```
+
+
+
+Make your own function to calculate F by retrieving information from the two lm models
+Hint: Use summary(y.lm) call the function myF()
+
+```{r}
+# MyF takes data from two quantitative independent variables and one quantitative dependent variable
+# it creates two models, one linear model with interaction, and one quadratic model with interaction
+# it computes an F statistic that can be used to determine if the quadratic terms are necessary
+myF=function(x1,x2,y){
+  x12=x1^2
+  x22=x2^2
+  modelc=lm(y~x1+x2+x1:x2+x12+x22)
+  modelr=lm(y~x1+x2+x1:x2)
+  
+  resc=modelc$residuals
+  resc2=resc^2
+  resr=modelr$residuals
+  resr2=resr^2
+  SSEr=sum(resr2)
+  SSEc=sum(resc2)
+  MSEc=mean(resc2)
+  
+  F_val=((SSEr-SSEc)/2)/(MSEc)
+  
+  return(list(F_statistic=F_val))
+  
+}
+```
+
+
+Use myF to calculate the F of example 12.9
+
+```{r}
+myF(x1,x2,y)
+```
+
+
+
+# Task 6
+
+Write a paragraph in your own words about AIC
+
+The Akaike information criterion is given by
+
+$$AIC=2k-2ln(\hat{L})$$
+
+where k is the number of parameters and $\hat{L}$ is the maximum value of the likelihood function for the model. The better model will have the lower AIC. We can see that this is similar to reduced $R^2$ because it also includes a penalty for model complexity. A single AIC value has no absolute meaning, as it is only used to compare different models. In particular, the AIC attempts to estimate the amount of information lost by a model, relative to other models. You choose the model that loses the least information, the model with the minimum AIC.
+
+Use AIC criterion to do a stepwise regression shown in Example 12.10 using R (see code in Lab8.R)
+
+
+```{r}
+library(readxl)
+civileng=read_excel("../../Dataxls/Excel/CIVILENG.XLS")
+civileng=civileng[,-1]
+head(civileng)
+```
+
+```{r}
+library(leaps)
+null = lm(LNSalary~ 1, data = civileng)
+full = lm(LNSalary ~ ., data = civileng)
+step(null, scope=list(lower=null, upper=full), direction="forward")
+step(full, data=cast, direction="backward")
+```
+
+
+We can see that both forward and backward regression pick the model that includes X1, X2, X3, X4, and X5 as the lowest AIC model. Our final model should only include these variables.
+

@@ -1,0 +1,465 @@
+---
+title: "OOP"
+author: "Collin Dabbieri"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: spacelab
+    highlight: pygments
+    fig_caption: yes
+    keep_md: yes
+    number_sections: yes
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, fig.align = TRUE)
+```
+
+
+# Introduction:
+OOP means: Object Oriented Programming.
+
+This mini lab is about understanding one of the object oriented approaches or systems available to R users (There are a number of them S3, S4 plus others that come in packages).
+
+You can read more about the S3 and other OOP formats here:
+<https://adv-r.hadley.nz/s3.html> install the package `sloop` before trying the code in the link.
+
+## Function overloading
+
+The idea here is that the way the function operates and processes input depends on the nature ("the class") of the object.
+
+Example:
+
+```{r}
+v1 = rep(c(TRUE,FALSE,TRUE), c(3,5,6))
+class(v1)
+summary(v1)
+```
+Here `v1` is a vector of logical values. It is `atomic` consisting of values of the same type.
+
+Summary does the sensible thing -- but how does R know how to change its summary methods?
+
+Look at this example
+
+```{r}
+v2 = rnorm(100,mean=50,sd=20)
+class(v2)
+summary(v2)
+```
+In both examples we used the function `summary()`, the only difference was that the object changed -- the output was `fundamentally` different as it should be. The objects `v1` and `v2` were of different classes - the first `logical` and the other `numeric`. The summary function inspected the class of the object and dispatched the correct method to process the object.
+
+## OOP Supports:
+
+  >
+    a) Objects
+    b) Classes
+    c) Inheritance
+    d) Polymorphism
+    
+The above can be examined in more detail but we will understand these concepts by looking at an example.
+
+## S3 System
+
+We will only be using the S3 version of OOP which is the most common form of OOP in R and R packages.
+
+#How it works
+
+We will now discuss the basics of how this system works.
+
+The main idea is the creation of an object through a constructor function. This is just a regular function that produces an object that has a special attribute called a `class`.
+
+This function will, when used create objects of this class and what we want to do is operate on these objects with other functions  called `generic functions`. These `generic functions` will detect the `class` of an object and then dispatch the correct `method` by inspecting the `class` attribute.
+
+This seems a little complicated so lets do an example.
+
+# Example
+
+S3 OOP is likely something you have already observed without knowing the precise mechanisms used.
+
+Take for example an object made by the constructor function `lm()`. We will install and make available the `s20x` package which contains data and functions we may wish to use.
+
+```{r s20x}
+if(!require(s20x)) install.packages("s20x")
+x<-1:30
+y<-8+3*x + rnorm(30,0,10)
+```
+
+Now lets use a constructor function:
+
+```{r lm}
+obj=lm(y~x)
+
+```
+
+Notice that the function `lm()` has been used with some input options to produce the object `obj`
+
+What is its class?
+
+```{r class}
+class(obj)
+```
+
+There are functions that we can use to operate on the obj which will be especially suited to handle this particular class.
+Example `summary`
+
+```{r}
+summary(obj)
+```
+
+
+
+# Generic functions
+
+To see what methods are available for the class `lm` we can invoke the function `methods`
+
+```{r}
+methods(class = "lm")
+```
+We can choose any of these functions (methods) to operate on the `lm` object and by this way we have a modular system of programming where we can use inheritance and take advantage of objects with a particular class.
+
+Lets pick a method above and use it for fun. Say, `normcheck`
+
+```{r}
+normcheck(obj)
+```
+
+
+It would we be nice to be able to send additional options to the method function as well.
+
+This will be facilitated when we create the generic function by using the ellipsis `...`.
+
+By the way here are the `normcheck` method functions for all the classes on the machine
+
+```{r}
+methods("normcheck")
+```
+Notice there are only two of them - one for a default class and the other for `lm`.
+
+Try another,
+
+```{r}
+methods("predict")
+```
+
+A lot more for `predict` -- in all cases we see the following format:
+
+`method.class`
+
+Notice that there is a method `predict.lm` which will operate on an object of class `lm`.
+
+
+#What happens
+
+When the function `normcheck()` (a generic function) inspects the object `normcheck(obj)` it dispatches the appropiate method `normcheck.lm`. 
+
+The actual function that operates on the object is `normcheck.lm()`.
+
+# An example from the ground up{.tabset .tabset-fade .tabset-pills}
+
+Suppose we wish to analyze data that is suitable for SLR (Simple Linear Regression). 
+
+
+## The function
+
+The first thing we shall do is make a constructor function. This function will make an object of a new class that we will make methods for.
+
+
+
+
+```{r}
+math4753Reg = function(df,x,y)
+  {
+ require(ggplot2) # we need this package 
+  
+  g = ggplot(df, aes_string(x=x,y=y))
+  g = g + geom_point()
+  g = g + geom_smooth(method="lm", formula=y~x)
+
+  eqn <- paste0(y,"~", x) # repalce x,y with called values
+  ylm = lm(eqn,data=df) # lm object formed
+  
+stuff = list(df=df, ylm=ylm,g=g) # stuff is a list of class `list`
+
+class(stuff)=append(class(stuff),"math4753Reg") # stuff is now a list of class `list` and `math4753Reg`
+return(stuff)
+}
+
+```
+
+The above function makes a list object, this will have an existing class `list` and this is appended by the use of `append` so that any object made with the function will have two classes associated with it , `list` and `math4753Reg`.
+
+We can take advantage of both classes -- that is we can operate on this object and inherit methods from both classes if we wish.
+
+We will now read in the ddt data set:
+
+```{r}
+ddt = read.csv("DDT.csv")
+head(ddt,2)
+```
+
+## Making the object
+
+We will make a new object - that has the new class appended to it.
+
+```{r}
+yreg  = math4753Reg(df = ddt, x = "WEIGHT", y = "LENGTH")
+```
+
+What is the class of this object?
+
+```{r}
+class(yreg)
+```
+
+We wish to use the second class in conjunction with a generic function to dispatch an appropriate method.
+
+
+## Lets make our own generic function
+
+If we examine an existing base R generic function like `print` this is what we see:
+
+```{r}
+print
+```
+
+Notice that the function is made with an object `x` and an `ellipsis`. The body of the function invokes the function `UseMethod()`.
+
+We will use exactly the same format to create our own generic functions.
+
+
+```{r}
+rsq<- function(x,...)
+{
+  #print("Calling the base math4753Reg function")
+  UseMethod("rsq")
+}
+
+```
+
+How does the `UseMethod` function work?
+
+The following is taken directly from the R help file.
+
+  When a function calling UseMethod("fun") is applied to an object with class attribute c("first", "second"), the system searches for a function called fun.first and, if it finds it, applies it to the object. If no such function is found a function called fun.second is tried. 
+  
+  If no class name produces a suitable function, the function fun.default is used, if it exists, or an error results.
+
+
+```{r}
+rsq.default <- function(x,...)
+{
+  print("There is no `rsq` method for this class!! Sadness!")
+  return(x)
+}
+```
+
+
+```{r}
+rsq.math4753Reg <- function(x, ...)
+{
+  
+  sm=summary(x$ylm,...)
+  
+  sm$r.squared
+}
+```
+
+Notice that the constructor function produces an object with two classes, `list` and `math4753Reg`. We could have created a method with the name `rsq.list`. This means of course that there is the possibiliy someone else did the same and then  there would be a conflict, `rsq.math4753Reg` is less likely to be a problem.
+
+
+
+## Try it out
+
+We will make a `rsq` method for the `list` class and invoke the generic function `rsq`
+
+```{r }
+
+rsq.list = function(x, ...)
+{
+  print("This is invoked because `list` is the first element in the class list for the object")
+}
+
+rsq(yreg)
+```
+
+We will now remove the method `rsq` from the `list` class and try some more invocations!
+
+
+```{r }
+rm(rsq.list)
+
+```
+
+
+We will use the same object this time we just might get what we need: the multiple R squared value
+
+```{r}
+rsq(yreg)
+```
+
+Try another set of variables
+
+```{r}
+yreg2 = math4753Reg(df = ddt, x = "LENGTH",y = "DDT")
+rsq(yreg2)
+```
+
+Now use the generic function on an object of an unknown class.
+
+```{r}
+y = "text"
+class(y)
+rsq(y)
+```
+
+Try yet another:
+
+```{r}
+yy = list(a=2, b = 3)
+class(yy)
+rsq(yy)
+```
+
+The generic function `rsq` applies the `UseMethod()` function to `yy`, the class is "list" so it looks for `rsq.list` and does not find it therefore it invokes `rsq.default` and hence we get `sadness` with the contents of `yy` returned.
+
+## Make another method
+
+We can extract the plot and do other things with it. There already exists a generic function called `plot` so we will simply add the class name `.math4753Reg` to the `plot` generic name.
+
+This will be the method function for plotting a ggplot. Notice that there is already a method for plotting the ggplot called `print.ggplot` (we could do this other ways). 
+
+```{r}
+methods(class="ggplot")
+```
+
+What function should I use to plot the `g` object created by the constructor? Notice there are already 3 methods available for the  ggplot class. If we needed more we coud create them.
+
+
+
+```{r}
+plot.math4753Reg = function(x,...)
+{
+  print(x$g,...) # could use plot(etc)
+}
+
+plot(yreg)
+
+```
+
+We will now create another method. This time summary information for the ggplot.
+
+Since `summary` is a generic function in base R we can use it.
+
+```{r}
+summary.math4753Reg = function(x,...)
+{
+  summary(x$g, ...)
+}
+
+summary(yreg)
+```
+# Conclusion
+
+The S3 OOP system is easy to use and flexible. The idea is to make an object containing all (or some major part) of the information you need for the analysis. Then extract from the object whatever  you may need through appropriate methods.
+
+The main function is a `constructor` and this will create objects of a certain class or classes. 
+
+A generic function will then inspect the object for the class of interest and then dispatch the method needed by way of a function called `method.class` 
+
+Here are the methods for our class `math4753Reg`
+```{r}
+methods(class = "math4753Reg")
+```
+
+
+
+
+# Questions
+
+Make an R function that acts as a constructor.
+
+The function must do the following:
+
+>
+  1. Take a data frame as one of its arguments.
+    + The response is given and will be quantitative.
+    + All other variables are assumed independent variables.
+  2. It must construct a complete first order model (including all interactions) for the data which is assumed the biggest model.
+  3. The step() function must be applied in all three directions and results stored for each.
+  4. All the output should be returned as an invisible list to be used by methods. `return(invisible(list(obj1name=obj1,obj2name=obj2)))`
+  5. The list output should be given the `class` name `MATH4773MLR`.
+  6. The function name will be `MYMLR`
+  
+  
+  Now use the generic function `plot` and create a method that will:
+
+> 
+  1. Plot the data (you may wish to use other packages to do this, pairs etc)
+  2. Plot each of the three models (how will you do this if there are more than two independent variables? You may use other packages etc)
+  
+
+Use the generic function `summary` and create a method that will:
+
+
+
+> 
+  1. compare the three models (numerical output)
+  2. summarize the three models (numerical output)
+  3. use the best model and then calculate cooks distance for all data
+  4. all the above can be placed in an invisible list.
+  
+There are a number of great packages available for you to use. Example `purrr` - this package enables you to rewrite complex iterative processes into a compact and sometimes faster running form.
+Functions like `try()` are good to use when errors are possible but you wish the script to continue running.
+
+Try and make your data work on the following: Take `eval=FALSE` off the chunk options.
+
+```{r invoke,eval=FALSE}
+mtcarsq=mtcars[,-c(8,9)] # remove categorical variables
+methods(class="MATH4773MLR")
+obj=MYMLR(data = mtcarsq, y="mpg")
+plot(obj)
+summary(obj)
+```
+
+
+# Using `map` in `purrr`
+
+The for loop can be replaced with various `map` functions. The following removes a multivariate datum then calculates estimates for the fitted model. For each model it calculates AIC and then sorts the result in increasing order. The indices are released from the sort function. This will tell us how well the model fits the data with the datum removed.
+
+The last line calculates the cooks distance and this will tell us which 
+
+```{r}
+library(purrr)
+library(magrittr)
+ylm = lm(mpg~.,data=mtcars)
+dim(mtcars)[1]->n
+lmm=map(1:n, ~lm(mpg~., data=mtcars[-.x,])) %>% map_dbl(.,~AIC(.x)) %>% sort(.,decreasing = FALSE, index=TRUE)
+class(lmm)
+lmm
+cks=sort(cooks.distance(ylm),decreasing = TRUE,index = TRUE)
+cks
+cll = ifelse(cks$ix==lmm$ix, "Purple", "Gold")
+plot(lmm$ix,cks$ix,type="p", bg=cll, pch=21, cex=1.2, xlab = "AIC datum index", ylab="Cooks datum index")
+axis(1, 1:n[cks$ix==lmm$ix])
+abline(coef=c(0,1),lwd=3)
+text(lmm$ix, cks$ix, 1:n, pos=2)
+
+# caculating the maximal model
+ymax = lm(mpg~.^2,data=mtcars[,-c(2,3,8,9)])
+head(mtcars)
+#car::vif(ymax)
+step(ymax,direction = "backward")
+
+head(mtcars)
+final=step(ymax,direction="backward")
+class(final)
+summary(final)
+```
+
+
+
+
+
+
