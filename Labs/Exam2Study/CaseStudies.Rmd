@@ -1,0 +1,28 @@
+---
+title: "Case Studies"
+author: "Collin Dabbieri"
+date: "10/23/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(s20x)
+
+data(fruitfly.df)
+
+fruitfly.fit=lm(fecundity~strain,data=fruitfly.df)
+eovcheck(fruitfly.fit)
+normcheck(fruitfly.fit)
+
+summary1way(fruitfly.fit)
+
+
+multipleComp(fruitfly.fit)
+
+
+```
+

@@ -1,0 +1,269 @@
+---
+title: "Laboratory 9"
+author: "Collin Dabbieri"
+date: "10/28/2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+
+
+# Task 1
+
+
+```r
+getwd()
+```
+
+```
+## [1] "/home/collindabbieri/Documents/AppliedRegressionAnalysis/Labs/Lab9"
+```
+
+# Task 2
+
+Give a paragraph description of each section of Ch. 13
+
+## 13.1 Introduction
+
+13.1 is an introduction to chapter 13. It starts by recapping Chps. 11-12 where we can perform multiple regression with either observationally (no fixed x's) or experimentally (x's predetermined) collected data. There is an important caveat for observational data, that a statistically significant relationship between xs and response does not necessarily imply cause and effect. The procedure for selecting sample data in advance is called the design of the experiment. The procedure for comparing population means is called an analysis of variance.
+
+## 13.2 Experimental Design Terminology
+
+Various design terms are defined. The process of collecting data is called an experiment. The plan for collecting data is the design of the experiment. The variable measured in the experiment is called the response variable. The object on which y is measured is an experimental unit. The independent variables related to the response are called factors. The intensity setting of a factor is the level. A treatment is a particular combination of levels of the factors.
+
+## 13.3 Controlling the Information in an Experiment
+
+The quality of data collected is dependent on the strength of the signal and the strength of the background noise. The greater the signal, and the weaker the background noise, the more information will be transmitted to the receiver. This is represented in the following
+
+$$\sigma_{\bar{y}}=\frac{\sigma}{\sqrt{n}}$$
+
+Where $\sigma$ is a measure of noise and n is the sample size. Selecting the factors and treatments as well as the sample size determines the volume of the signal. One can reduce noise by assigning the treatments to the experimental units.
+
+## 13.4 Noise Reducing Designs
+
+A completely randomized design is one where the treatments are randomly assigned to the experimental units. In a randomized block design, each of the treatments are randomly assigned to the experimental units within each block, with one experiment unit assigned per treatment. This method better handles the variation from one block to the next.
+
+## 13.5 Volume-Increasing Designs
+
+The proper choice of the treatments associated with two or more factors can increase the volume of the signal. A factorial design is a method for selecting the treatments, a complete factorial experiment consists of all factor-level combinations of the treatments. A complete interaction included model for a complete factorial design will always have the number of data points equal to the number of terms in the model. Researchers solve this problem by replicating data, taking additional data points for the same set of x values. Fractional factorial experiments aim to reduce the large number of treatments that a complete factorial experiment can often have. They accomplish this by setting $\beta$ estimates for higher order terms (3+-way interactions) equal to the $\beta$ estimates of some of the lower order terms.
+
+## 13.6 Selecting the Sample Size
+
+The number of replications in an experiment can be determined by the pivotal statistic used to determine a quantity of interest. For example, the width of the confidence level for a population mean is 
+
+$$t_{\alpha/2}s_{\bar{y}}=t_{\alpha/2}\frac{s}{\sqrt{n}}$$
+
+If you have an idea of how wide you'd like your interval to be, you can select an appropriate sample size.
+
+
+
+## 13.7 The Importance of Randomization
+
+Our models operate under the assumption that $\epsilon$ is distributed normal with mean 0 and variance $\sigma^2$ for fixed settings of the independent variables. We also assume that the random errors associated with repeated observations are independent of each other. However, we can not be sure if the errors associated with repeat observations are truly random. By randomizing the design experiment you randomly assign these error effects to the treatments.
+
+# Task 3
+
+Using EPOXY data set reproduce the analysis on pg 736 using R
+
+Exposure time has 3 levels, system has 4 levels. A randomized block design is used, where each system has each exposure time level assigned to it (i.e there are 12 observations)
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_3 +\beta_4x_4+\beta_5x_5$$
+
+x1=1 if S1, 0 if not.
+x2=1 if S2, 0 if not.
+x3=1 if S3, 0 if not.
+x4=1 if 24 hours exposure, 0 if not.
+x5=1 if 60 days exposure, 0 if not.
+
+Given that S4 is our baseline, $\beta_1=(\mu_{S1}-\mu_{S4}), \beta_2=\mu_{S2}-\mu_{S4},\beta_3=\mu_{S3}-\mu_{S4}$.
+
+If the inclusion of the 4 system levels creates no difference in the treatment means, then the following NULL would be true
+
+$$H_0:\beta_1=\beta_2=\beta_3=0$$
+
+To test this NULL we need the reduced model.
+
+$$E(y)=\beta_0+\beta_4x_4+\beta_5x_5$$
+
+We can use a partial F statistic for the nested model.
+
+
+```r
+library(readxl)
+EPOXY=read_excel("../../Dataxls/Excel/EPOXY.XLS")
+head(EPOXY)
+```
+
+```
+## # A tibble: 6 x 3
+##   `EXP-TIME` SYSTEM CORRATE
+##        <dbl>  <dbl>   <dbl>
+## 1          1      1     6.7
+## 2          1      2     7.5
+## 3          1      3     8.2
+## 4          1      4     6.1
+## 5         60      1     8.7
+## 6         60      2     9.1
+```
+
+
+
+```r
+names(EPOXY)[1:2] = c('EXP_TIME_', 'SYSTEM_')
+EPOXY = within(EPOXY, {EXP_TIME_ = factor(EXP_TIME_, levels=c(120, 1, 60))
+SYSTEM_ = factor(SYSTEM_, levels=c(4,1,2,3))})
+FULL = lm('CORRATE~.', EPOXY)
+summary(FULL)
+```
+
+```
+## 
+## Call:
+## lm(formula = "CORRATE~.", data = EPOXY)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -0.3417 -0.1396 -0.0125  0.1396  0.4083 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  11.7583     0.2163  54.350 2.61e-09 ***
+## EXP_TIME_1   -5.5500     0.2163 -25.653 2.31e-07 ***
+## EXP_TIME_60  -3.5250     0.2163 -16.293 3.40e-06 ***
+## SYSTEM_1      0.3333     0.2498   1.334  0.23050    
+## SYSTEM_2      1.0000     0.2498   4.003  0.00709 ** 
+## SYSTEM_3      2.3333     0.2498   9.340 8.54e-05 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 0.306 on 6 degrees of freedom
+## Multiple R-squared:  0.9923,	Adjusted R-squared:  0.9859 
+## F-statistic: 155.3 on 5 and 6 DF,  p-value: 2.933e-06
+```
+
+
+
+```r
+# To do the test H_0:b1=b2=b3=0
+# We need the reduced model
+RED= lm(`CORRATE`~`EXP_TIME_`, EPOXY)
+anova(RED,FULL)
+```
+
+```
+## Analysis of Variance Table
+## 
+## Model 1: CORRATE ~ EXP_TIME_
+## Model 2: CORRATE ~ EXP_TIME_ + SYSTEM_
+##   Res.Df     RSS Df Sum of Sq      F    Pr(>F)    
+## 1      9 10.1450                                  
+## 2      6  0.5617  3    9.5833 34.125 0.0003634 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+Our null hypothesis is $H_0: \beta_1=\beta_2=\beta_3=0$, our p-value is much less than 0.05 so we can say we have significant evidence that the exposure terms are significant, i.e that there is a difference among treatment means for our reduced model.
+
+
+
+# Task 4
+
+## Explain example 13.6 pg 733
+
+A researcher wants to determine the effect of Temperature (200,250,300) on hardness (1-10) of plastic. Completely randomized design is employed. r plastic molds formed for each of the three levels of temperature. How many replicates, r, of plastic molds are required at each temperature level in order to estimate the difference between the mean hardness value for any two temperature levels to within 0.5 point?
+Assume a 95% confidence interval.
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2$$
+
+y is hardness level, x1=1 if 200 degrees, x2=1 if 250 degrees. 300 degrees is our baseline.
+
+$\beta_1=\mu_{200}-\mu_{300},\beta_2=\mu_{250}-\mu_{300}$. A confidence interval on one of these betas will reveal a confidence interval for the difference in mean hardness values at two different temperatures.
+
+$$V(\hat{\beta_1})=V(\bar{y}_{200})+V(\bar{y}_{300})=\frac{V(y)}{r}+\frac{V(y)}{r}=\frac{2V(y)}{r}$$
+
+If we assume V(y)=1, then the estimated variance of $\hat{\beta_1}$ is
+
+$$s_{\beta_1}^2=\frac{2}{r}$$
+
+Confidence interval for $\beta_1$ is given by
+
+$$\hat{\beta_1}\pm t_{\alpha/2}(s_{\beta_1})$$
+
+So our bound on the error of estimation is 
+
+$$B=t_{\alpha/2}(s_{\beta_1})=t_{\alpha/2}\sqrt{\frac{2}{r}}$$
+
+$$r=(t_{\alpha/2})^2\frac{2}{B^2}$$
+
+Our bound is 0.5, utilizing a 95% confidence level, $\alpha/2=0.025$, and $t_{\alpha/2}$ is roughly 2.
+
+Plugging values in we have
+
+$$r=2^2\frac{2}{0.5^2}=32$$
+
+32 replicates of plastic molds are required at each level.
+
+
+
+## Explain example 13.7 pg 734 
+
+Consider a 2x2 factorial to investigate the effect of two factors on the light output y of flashbulbs (measured as a percentage) used in cameras. The two factors (and their levels) are x1=amount of foil in the bulb (100 and 200 milligrams) and x2=speed of sealing machine (1.2 and 1.3 revolutions per minute). The complete model is 
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2$$
+
+x1=1 if 100 mg. x2=1 if 1.2 rpm. How many replicates, r, of flashbulbs produced at each of the 4 treatments are required to estimate the interaction $\beta$ to within 2.2% of its true value using a 95% confidence interval? Assume that an estimate for the standard deviation of light output, y, is 1%.
+
+Given our model, with 200 and 1.3 as our baselines, we have
+
+$$\beta_0=\mu_{200,1.3}$$
+$$\beta_0+\beta_2=\mu_{200,1.2}$$
+
+$$\beta_0+\beta_1=\mu_{300,1.3}$$
+
+$$\beta_0+\beta_1+\beta_2+\beta_3=\mu_{300,1.2}$$
+
+With this we can solve for $\beta_3$
+
+$$\beta_3=(\mu_{300,1.2}-\mu_{300,1.3})-(\mu_{200,1.2}-\mu_{200,1.3})$$
+
+So our interaction term is a linear combination of our four treatment means. We can determine $V(\hat{\beta_3})$
+
+$$V(\hat{\beta_3})=V(\bar{y}_{300,1.2})+V(\bar{y}_{300,1.3})+V(\bar{y}_{200,1.2})+V(\bar{y}_{200,1.3})=\frac{4V(y)}{r}$$
+
+We have assumed the standard deviation of y is 1%, so we can further assume $V(y)=1^2=1$
+
+$$V(\hat{\beta_3})=\frac{4}{r}$$
+
+again a confidence interval for $\beta_3$ is given by
+
+$$\hat{\beta_3}\pm t_{\alpha/2}(s_{\beta_3})$$
+
+and the bound for error estimation is given by 
+
+$$B=t_{\alpha/2}(s_{\beta_3})$$
+
+$$s_{\beta_3}^2=V(\hat{\beta_3})=\frac{4}{r}$$
+
+$$B=t_{\alpha/2}\sqrt{\frac{4}{r}}$$
+
+$$r=t_{\alpha/2}^2\frac{4}{B^2}$$
+
+From the problem B=2.2, for a 95% confidence interval we have $t_{\alpha/2}=t_{0.025}$ which is roughly 2
+
+$$r=2^2\frac{4}{2.2^2}=3.31$$
+
+Since we can't have fractional observations we would need 4 replications at each of the 4 treatments to estimate the interaction $\beta$ to within 2.2%.
+
+
+
+-explain some deficiencies in how the replication "r" was calculated
+
+In the problem we are told that an estimate of the standard deviation of y is 1%. This is not the same as saying the standard deviation is 1, as this would only be true if y=100.
+
+
+
+
+

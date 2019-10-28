@@ -34,6 +34,7 @@ Example:
 
 ```{r}
 v1 = rep(c(TRUE,FALSE,TRUE), c(3,5,6))
+v1
 class(v1)
 summary(v1)
 ```
@@ -195,7 +196,8 @@ We can take advantage of both classes -- that is we can operate on this object a
 We will now read in the ddt data set:
 
 ```{r}
-ddt = read.csv("DDT.csv")
+library(readxl)
+ddt = read_excel("../../Dataxls/Excel/DDT.XLS")
 head(ddt,2)
 ```
 
@@ -279,9 +281,11 @@ We will make a `rsq` method for the `list` class and invoke the generic function
 rsq.list = function(x, ...)
 {
   print("This is invoked because `list` is the first element in the class list for the object")
+  
+  return(rsq.default(x,...))
 }
 
-rsq(yreg)
+r2=rsq(yreg)
 ```
 
 We will now remove the method `rsq` from the `list` class and try some more invocations!
@@ -393,11 +397,193 @@ The function must do the following:
   6. The function name will be `MYMLR`
   
   
+```{r}
+
+#regression with y~.
+#use vif to remove variables with vif>10
+#stepwise regression with y~.^2 with remaining variables
+
+
+#which.max() gives index of max value (use for vif)
+#vif returns vector with vif values, use which.max to find highest one
+#remember vif only considers xs, having the y in there will mess with removing variables
+
+
+#assumed y is quantitative
+#The y input is the name of the y variable
+#.^2 in lm includes all first order terms and all of their interaction terms
+MYMLR=function(data,y){
+  require(car)
+  require(leaps)
+
+  nms=names(data)
+  yi=which(nms==y) #index of the y variable
+  
+  #place y in the last column slot, call it dat, this will help us with using vif to remove xs
+  dat=data[,-yi] #remove y column
+  dat=cbind(dat,data[,yi])
+  dat=as.data.frame(dat)
+  names(dat)[length(names(dat))]<-"y_dat"
+  
+  #First use model with no interaction terms to determine multicollinearity
+
+
+  reg1=lm(unlist(y_dat)~.,data=dat) #model with all terms but no interaction, will help us find multicollinearity
+  
+  vif_proxy=11
+  while(vif_proxy>10){
+    
+    #use vif to iteratively remove x variables
+    
+    #get vf vector
+    vf=vif(reg1)
+    
+    #find index of highest vif
+    idx_max=which.max(vf)
+    
+    max_vf=vf[idx_max]
+    
+    #is it greater than 10?
+    if(max_vf>10.){
+      
+      #remove that index from the data
+      dat=dat[,-idx_max]
+      
+      #make new model with new reduced data
+      reg1=lm(unlist(y_dat)~.,data=dat)
+    }
+  
+    #update vif_proxy variable
+    vif_proxy=max_vf
+    
+  }
+  
+  names_final=names(dat)
+  
+  
+  # Now that multicollinearity is removed, we can do forward, backward and both ways step regression
+  
+  null=lm(unlist(y_dat)~1,data=dat)
+  full=lm(unlist(y_dat)~.^2,data=dat)
+  
+  forward=step(null, scope=list(lower=null, upper=full), direction="forward",trace=0)
+  backward=step(full, direction="backward",trace=0)
+  both=step(null,scope=list(lower=null,upper=full),direction="both",trace=0)
+  
+  # best model is one with the lowest AIC
+  
+  
+  names(dat)[length(names(dat))]<-y
+  
+  stuff=list(data=dat,y=y,forward_step=forward,backward_step=backward,both_step=both,names=names_final)
+  class(stuff)="MATH4773MLR"
+  return(invisible(stuff))
+  
+}
+```
+
+  
+  
   Now use the generic function `plot` and create a method that will:
 
 > 
   1. Plot the data (you may wish to use other packages to do this, pairs etc)
   2. Plot each of the three models (how will you do this if there are more than two independent variables? You may use other packages etc)
+  
+  
+```{r}
+#so x is going to be the list that is returned by myMLR
+#x$df,x$y,x$forward_step,...
+
+#consider using corrr, magrittr, PerformanceAnalytics packages
+plot.MATH4773MLR=function(x,y,...){
+  require(rgl)
+
+  pairs(x$data)
+  
+  dat=x$data
+  nms=names(dat)
+  
+  forward=x$forward_step
+  #backward=x$backward_step
+  both=x$both_step
+  
+  full=lm(unlist(mpg)~.^2,data=dat)
+  backward=step(full, direction="backward",trace=0)
+  
+  X=dat[,-length(dat)]
+  nms_X=names(X)
+  #build vector of means for all xs
+  means=c()
+  for(i in 1:length(X)){
+    means=append(means,mean(X[,i]))
+  }
+  
+  
+  mfrow3d(length(X),length(X))
+  
+  #select x1 and x2 variables
+  for(i in 1:length(X)){  #i is index of x1 variable
+    for(j in 1:length(X)){ #j is index of x2 variable
+      
+      
+      #pick a range of values for x1 and x2
+      sampling=20
+      x1_vals=seq(from=min(X[,i]),to=max(X[,i]),length.out=sampling)
+      x2_vals=seq(from=min(X[,j]),to=max(X[,j]),length.out=sampling)
+      
+      x1_plot=c()
+      x2_plot=c()
+      y_plot=c()
+      
+      for(k in 1:length(x1_vals)){ #k is index of x1_vals
+        for(l in 1:length(x2_vals)){ #l is index of x2_vals
+          x1_val=x1_vals[k]
+          x2_val=x2_vals[l]
+          
+          means_temp=means
+          means_temp[i]=x1_val
+          means_temp[j]=x2_val #now means_temp has our selected variables plus means in all other spots
+          
+
+
+          
+          #new.data=data.frame(means_temp)
+          #rownames(new.data)=nms_X
+          
+          
+          
+          #new.data=data.frame(nms_X[1]=means_temp[1],nms_X[2]=means_temp[2],nms_X[3]=means_temp[3],nms_X[4]=means_temp[4],nms_X[5]=means_temp[5],nms_X[6]=means_temp[6])
+          
+          
+          #THIS PART IS HARD CODED, couldn't get this to be soft in time, everything else should be soft
+          new.data=data.frame(hp=means_temp[1],drat=means_temp[2],wt=means_temp[3],qsec=means_temp[4],gear=means_temp[5],carb=means_temp[6])
+          
+          y_pred=predict.lm(backward,new.data)
+          
+          x1_plot=append(x1_plot,x1_val)
+          x2_plot=append(x2_plot,x2_val)
+          y_plot=append(y_plot,y_pred)
+          
+        }
+      }
+      #open3d()
+      
+      plot3d(x1_plot,x2_plot,y_plot,xlab=nms[i],ylab=nms[j],zlab=nms[length(nms)])
+      #next3d()
+      
+    }
+  }
+  
+  
+  
+  #TODO for each value in x1, x2, make a new.data frame and predict the y value
+  #other x variables have mean values
+  
+  
+}
+```
+
   
 
 Use the generic function `summary` and create a method that will:
@@ -410,17 +596,60 @@ Use the generic function `summary` and create a method that will:
   3. use the best model and then calculate cooks distance for all data
   4. all the above can be placed in an invisible list.
   
+  
+```{r}
+summary.MATH4773MLR=function(x,...){
+  forward=x$forward_step
+  backward=x$backward_step
+  both=x$both_step
+  
+  for_anova=forward$anova
+  back_anova=backward$anova
+  both_anova=both$anova
+  
+  sum_for=summary(forward)
+  sum_back=summary(backward)
+  sum_both=summary(both)
+    
+  for_AIC=tail(for_anova$AIC,n=1)
+  back_AIC=tail(back_anova$AIC,n=1)
+  both_AIC=tail(both_anova$AIC,n=1)
+  
+  if(min(c(for_AIC,back_AIC,both_AIC))==back_AIC){
+    cooks_distance=cooks.distance(backward)
+  } else if(min(c(for_AIC,back_AIC,both_AIC))==for_AIC){
+    cooks_distance=cooks.distance(forward)
+  } else if(min(c(for_AIC,back_AIC,both_AIC))==both_AIC){
+    cooks_distance=cooks.distance(both)
+  }
+  
+  
+  
+  return(invisible(list(forward_summary=sum_for,backward_summary=sum_back,both_summary=sum_both,forward_anova=for_anova,backward_anova=back_anova,both_anova=both_anova,cooks_distance=cooks_distance)))
+  
+}
+```
+  
+  
 There are a number of great packages available for you to use. Example `purrr` - this package enables you to rewrite complex iterative processes into a compact and sometimes faster running form.
 Functions like `try()` are good to use when errors are possible but you wish the script to continue running.
 
 Try and make your data work on the following: Take `eval=FALSE` off the chunk options.
 
-```{r invoke,eval=FALSE}
+```{r}
+
+#NOTE plot function has one line that's hard coded, couldn't figure out how to make it soft in time.
+
+library(rgl)
 mtcarsq=mtcars[,-c(8,9)] # remove categorical variables
+#print(names(mtcarsq))
+
 methods(class="MATH4773MLR")
 obj=MYMLR(data = mtcarsq, y="mpg")
-plot(obj)
-summary(obj)
+plot(obj,y="mpg")
+rglwidget(width=800,height=800)
+sum=summary(obj)
+sum
 ```
 
 
@@ -457,6 +686,9 @@ final=step(ymax,direction="backward")
 class(final)
 summary(final)
 ```
+
+
+
 
 
 
