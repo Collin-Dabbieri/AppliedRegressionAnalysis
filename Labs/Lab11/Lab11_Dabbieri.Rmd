@@ -1,0 +1,96 @@
+---
+title: "Laboratory 11"
+author: "Collin Dabbieri"
+date: "11/11/2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Task 1
+
+```{r}
+getwd()
+```
+
+# Task 2
+
+Using the package s20x load the data arousal.df
+
+```{r}
+library(s20x)
+
+data(arousal.df)
+head(arousal.df)
+```
+
+
+Write a paragraph on what the data and experiment concerns.
+
+Emotional arousal levels were quantified for males and females by measuring changes in their pupil diameters. Participants were presented an image of either a nude male, a nude female, a landscape or an infant and their arousal levels were recorded. 20 males and 20 females participated in the study.
+
+
+Make an interaction plot with gender on the horizontal axis
+
+```{r}
+interactionPlots(arousal~gender+picture,data=arousal.df)
+```
+
+
+
+Do the same but with picture on the horizontal axis
+
+```{r}
+interactionPlots(arousal~picture+gender,data=arousal.df)
+```
+
+
+What do you conclude from the pictures?
+
+The pictures tell me that gender and picture clearly interact, so a gender:picture term will be necessary in the model.
+
+
+Give the anova table for the interactive model
+
+```{r}
+model=lm(arousal~gender+picture+gender:picture,data=arousal.df)
+summary(model)
+anova(model)
+```
+
+Interpret the output
+
+Our model is
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_3+\beta_4x_4+\beta_5x_1x_2+\beta_6x_1x_3+\beta_7x_1x_4$$
+
+Where $x_1=1$ when gender is male. $x_2=1$ when picture is landscape. $x_3=1$ when picture is nude female and $x_4=1$ when picture is nude male. So female gender and infant picture are our baselines.
+
+The anova table tells us that the gender terms, the picture terms, and the interaction terms are significant in our model at the 95% confidence level.
+
+
+Give the point and 95% interval estimate for male:landscape-female:landscape
+
+
+```{r}
+gender.picture<-crossFactors(arousal.df$gender,arousal.df$picture)
+gender.picture<-factor(gender.picture)
+arousal.1way.fit<-lm(arousal.df$arousal~gender.picture)
+summary1way(arousal.1way.fit)
+multipleComp(arousal.1way.fit)
+```
+
+We can see from the output that the female:landscape-male:landscape has estimate 0.885 with 95% confidence interval (-0.043-1.813)
+
+So male:landscape-female:landscape has estimate -0.885 with confidence interval (-1.813-0.043)
+
+Interpret the  interval
+
+We can see from the interaction plot that males and females seem to have similar arousal levels when presented with a picture of a landscape. This is confirmed by the interval, we can say it is plausible at the 95% confidence level that males and females have the same arousal reaction to a landscape.

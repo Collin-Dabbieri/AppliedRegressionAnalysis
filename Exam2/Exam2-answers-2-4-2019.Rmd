@@ -1,0 +1,227 @@
+---
+title: "Exam 2 Answer Booklet"
+author: "Dr Wayne Stewart"
+date: "11/8/2019"
+output:
+  html_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+Name: Collin Dabbieri
+
+Grade 2,3,4 please
+
+Please place answers to question 2-4 here: 
+\newpage
+
+# Question 2
+
+```{r}
+library(readxl)
+prodqual=read_excel("./PRODQUAL.XLS")
+head(prodqual)
+```
+
+
+## a)
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_1x_2+\beta_4x_1^2+\beta_5x_2^2$$
+
+## b)
+
+```{r}
+qual=prodqual$QUALITY
+temp=prodqual$TEMP
+pressure=prodqual$PRESSURE
+temp2=temp^2
+press2=pressure^2
+model=lm(qual~temp+pressure+temp:pressure+temp2+press2)
+summary(model)
+```
+
+
+## c)
+
+The p-value from the F-test (2.2e-16) tells us that the model is adequate at the 95% confidence level.
+
+## d)
+
+99.3% of the variability in the response is explained by the model. This comes from the $R^2$ value
+
+$$R^2=1-\frac{SSE}{TSS}$$
+
+## e)
+
+$$y=-5.128e3+3.11e1x_1+1.397e2x_2-1.334e-1x_3-1.144e0x_4-1.455e-1x_5$$
+
+Maximum point has a slope of 0
+
+$$y'=0=$$
+
+```{r}
+A=matrix(c(-5.128e3,3.11e1,1.397e2,-1.334e-1,-1.144e0,-1.455e-1))
+```
+
+
+
+\newpage
+
+# Question 3
+
+```{r}
+library(s20x)
+
+```
+
+
+## a)
+
+```{r}
+data(seeds.df)
+head(seeds.df)
+seeds.df=within(seeds.df,{Water.F=factor(Water)})
+model1=lm(Count~Light+Water.F+Light:Water.F,data=seeds.df)
+eovcheck(model1)
+```
+
+
+There does not appear to be fanning, I believe we can say that it is plausible that the variance is constant.
+
+
+
+
+
+## b)
+
+```{r}
+interactionPlots(Count~Light+Water.F,data=seeds.df)
+interactionPlots(Count~Water.F+Light,data=seeds.df)
+```
+
+There is some pretty strong evidence for interaction here. The lines are certainly not parallel.
+
+## c)
+
+```{r}
+summary2way(model1)
+```
+
+the p-value for the interaction term is ~0. We have strong evidence for interaction.
+
+
+## d)
+
+The main effects appear to be water and the interaction term. The light term is not significant at the 95% confidence level.
+
+
+## e)
+
+The most parsiminous model possible will only use either Water or Light
+
+```{r}
+model2=lm(Count~Water.F+Light:Water.F,data=seeds.df)
+anova(model2)
+```
+Let's remove the interaction term
+
+```{r}
+model3=lm(Count~Water.F,data=seeds.df)
+summary(model3)
+```
+
+So we're left with only Water.
+
+
+Water has 6 levels, 5 dummy variables
+
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_3+\beta_4x_4+\beta_5x_5$$
+
+
+
+\newpage
+
+# Question 4
+
+## a)
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_3+\beta_4x_4$$
+
+the $x_1$ term is the dummy variable for treatments. Terms $x_2,x_3,x_4$ are dummy variables for blocks
+
+
+## b)
+
+```{r}
+Ex1=c(40,60,70,80)
+Ex2=c(55,69,75,90)
+
+boxplot(cbind(Ex1,Ex2))
+
+t.test(Ex1,Ex2,paired=T)
+```
+There is evidence of a difference in means at the 95% confidence level
+## c)
+
+```{r}
+Exams=c(Ex1,Ex2)
+Treatments=rep(c("T1","T2"),c(4,4))
+Blocks=rep(c("1","2","3","4"),2)
+Exams
+Treatments
+Blocks
+
+#we want to test if treatment means are equal
+
+model_c=lm(Exams~Treatments+Blocks)
+model_r=lm(Exams~Blocks)
+```
+
+
+## d)
+
+```{r}
+anova(model_r,model_c)
+```
+
+
+The p-value from the partial F statistic tells us that we can say with 95% confidence that the treatment means are different. Meaning we can say with confidence that the mean for exam1 is different than the mean for exam2
+
+## e)
+
+
+$T_{calc}=-4.7411$
+
+$F_{calc}=22.478$
+
+
+show numerically
+
+```{r}
+-4.7411/22.478
+```
+
+
+$$T_{calc}=-0.21F_{calc}$$
+
+
+
+IGNORE BELOW
+
+$$F_{calc}=\frac{\frac{SST}{k}}{\frac{SSE}{n-(k+1)}}$$
+
+
+$$SSE=\sum (Y_i-\hat{Y_i})^2$$
+
+$$SST=\sum n_i (\bar{y_i}-\bar{y})^2$$
+
+$$F=\frac{\frac{\chi^2}{\nu}}{\frac{\chi^2}{\nu}}$$
+
+
+$$T=\frac{Z}{\sqrt{\frac{\chi^2}{\nu}}}$$

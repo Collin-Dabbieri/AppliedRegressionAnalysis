@@ -1,0 +1,95 @@
+Case Study 35 
+========================================================
+author: Collin Dabbieri
+date: 
+autosize: true
+
+Dataset
+========================================================
+
+Nail
+
+The drying time for quick drying nail polish and regular nail polish are recorded. Goal is to determine which nail polish dries faster.
+
+60 observations total
+
+```{r, out.width = "600px",echo=FALSE}
+knitr::include_graphics("Nail_Polish.jpg")
+```
+
+
+Plot Data
+========================================================
+
+```{r,echo=FALSE,out.width="800px"}
+library(s20x)
+data (nail.df)
+boxplot(dry~polish,main="Drying times by polish",xlab="polish",ylab="time in seconds",data=nail.df)
+
+```
+
+Summary
+========================================================
+
+```{r, echo=FALSE,out.width="800px"}
+summaryStats(dry~polish,data=nail.df)
+```
+
+
+Model
+========================================================
+
+$$E(y)=\beta_0+\beta_1x_1$$
+
+where $x_1=1$ if regular nail polish
+
+```{r,out.width="300px"}
+nail.fit<-lm(dry~polish,data=nail.df)
+summary(nail.fit)
+```
+
+
+Equality of Variance
+========================================================
+
+```{r,out.width="600px"}
+eovcheck(nail.fit)
+
+```
+
+Transform Response
+========================================================
+
+```{r,out.width="600px"}
+lognail.fit<-lm(log(dry)~polish,data=nail.df)
+eovcheck(lognail.fit)
+
+```
+
+
+Normality of Errors
+========================================================
+```{r,out.width="600px"}
+normcheck(nail.fit,shapiro.wilk=TRUE)
+```
+
+
+Normality of Errors
+========================================================
+
+```{r,out.width="600px"}
+normcheck(lognail.fit,shapiro.wilk=TRUE)
+```
+
+T-test
+========================================================
+
+We can say with 95% confidence that the underlying means are not equal.
+
+Data suggests that the quick drying nail polish does dry more quickly.
+
+```{r,out.width="600px"}
+t.test(dry~polish,var.equal=F,data=nail.df)
+```
+
+

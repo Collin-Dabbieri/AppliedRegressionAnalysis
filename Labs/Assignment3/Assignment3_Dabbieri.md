@@ -11,7 +11,7 @@ output:
 
 
 
-# Number of Questions Completed
+# Number of Questions Completed: 6/6
 
 # 1 Q 12.40
 

@@ -1,0 +1,193 @@
+---
+title: "MATH 4773 Project 2 Template"
+author: "Your Name"
+date:  "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+    csl: biomed-central.csl
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    number_sections: yes
+    theme: journal
+    toc: yes
+    toc_float: yes
+   
+  word_document:
+    toc: yes
+    toc_depth: 4
+  pdf_document:
+    df_print: kable
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+bibliography: project.bib
+abstract: Fill this out last -- summarize in a paragraph what this project accomplishes
+---
+
+<center>
+
+![Dr. Wayne Stewart](wayne.jpg "My Picture"){ width=20% }
+
+</center>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# Introduction
+
+Here you should introduce the data and the problem you wish to solve.
+Use your  own subheadings. Fill with informative sentences and pictures and links.
+You may inclucde sub-sub headings.
+You can cite from your bibliography [see @millar and @crawley]
+
+##My Video
+
+
+<video width="320" height="240" controls>
+  <source src="usingvideoinrmd.mp4" type="video/mp4">
+Your browser does not support the video tag.
+</video>
+
+
+## What are the variables? 
+```{r datacars}
+data(mtcars)
+head(mtcars)
+```
+
+```{r carnames}
+names(mtcars)
+```
+
+
+### Sub sub headings can be useful
+
+[^1]: A little footnote
+
+### Plot data
+
+Use informative plots -- especially ggplot and rgl plots
+
+```{r carcharacteristics, fig.height = 5, fig.cap = "MTCARS",fig.align='center',fig.cap="Graph of data with loess smoother"}
+library(ggplot2)
+g = ggplot(mtcars, aes(x = disp, y = mpg, color = cyl)) + geom_point()
+g = g + geom_smooth(method = "loess")
+g
+```
+
+
+## How were the data collected? 
+
+## What is the story behind the data?
+
+```{r}
+library(leaflet)
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+m  # Print the map
+```
+
+
+## Why was it gathered? 
+
+## What is your interest in the data?
+
+### Include pictures `![](jpeg)`
+
+## What problem do you wish to solve?
+
+# Theory needed to carry out MLR
+## Main result 1
+## Main result 2
+## Main result 3 etc
+
+# Model selection
+
+Discuss uyour model selection procedure
+
+## AIC
+
+`step()`
+
+## Adjusted $R^2$ 
+
+$$R_{adj}^2 =$$
+
+# Validity with mathematical expressions
+
+
+## Checks on validity
+
+
+### Errors distributed Normally
+
+$$\epsilon_i \sim N(0,\sigma^2)$$
+
+
+
+#### Shapiro-wilk
+
+### Constant variance
+
+#### Residual vs fitted values
+
+#### See BOOK for help
+
+### Zero mean value of $\epsilon$
+
+### Independence of data 
+
+# Analysis of the data
+
+## Make sure you include many great plots
+
+## Add appropriate plane
+
+
+## Summary lm object
+
+### Interpretation of all tests
+### Interpretation of multiple R squared
+### Interpretation of all point estimates
+## Calculate cis for $\beta$ parameter estimates
+### Use of `predict()`
+### Use of `confint()`
+
+### Check on outliers using cooks plots
+
+Remember to interpret this plot and all other plots
+
+```{r}
+library(car)
+library(readxl)
+library(rgl)
+prod = read_xls("PRODQUAL.xls")
+scatter3d(QUALITY~TEMP+PRESSURE,prod, fit=c("linear","quadratic"))
+rgl::rglwidget()
+```
+
+
+
+
+
+# Conclusion
+## Answer your research question
+## Suggest ways to improve model or experiment
+
+
+# References
+  

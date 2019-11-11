@@ -1,0 +1,60 @@
+---
+title: "t-test and MLR: Class exercise"
+author: "Collin Dabbieri"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    theme: cerulean
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+There is a very nice connection between independent 2 sample t tests and MLR when the population variances are equal. 
+
+$$ E(y)=\beta_0 + \beta_1 x_1 $$
+
+Furthermore when considering paired data (data where each experimental unit has two measurements) we find a link to random block designs. 
+
+In this model we have $p$ experimental units ($p-1$ dummy variables) and 2 treatments (one dummy variable $x_p$)
+
+$$E(y)=\beta_0 +\beta_1 x_1 +\ldots +\beta_{p-1} x_{p-1} +  \beta_p x_p $$ 
+
+
+# Development
+
+The model for two independent samples where we wish to test $H_0:\mu_1-\mu_2=0$.
+
+$$E(Y) = \beta_0 + \beta_1 x_1 $$
+where $x1$ is a dummy variable. When $x_1=0$ this corresponds to the first Level of the categorical variable and  $x_1=1$  corresponds to the second level.
+
+The MLR model can be written 
+
+$$Y=X\beta + \epsilon$$
+The design matrix is 
+
+$$X=\begin{pmatrix}
+1 & 0\\
+\vdots & \vdots \\
+1 & 0\\
+1 & 1 \\
+\vdots & \vdots\\
+1 & 1
+\end{pmatrix}_{(n_1+n_2)\times 2}$$
+
+Where the matrix is made of two sub matrices with sizes $n_1\times 2$ and $n_2\times 2$.
+
+# Questions
+
+$$\hat{\beta}=(X^{'}X)^{-1}X^{'}Y$$
+  
+  
+  1. Find $\hat{\beta}$ estimates for the model above. Give the general results for this model -- you will need to find an inverse for a $2\times 2$ matrix.
+  2. Find the $F statistic$ testing $\beta_1 = 0$
+  3. Find the $T$ statistc for the same test. ( look it up in MS pg436)
+  4. What is the relationship between $T$ and $F$ for this model?

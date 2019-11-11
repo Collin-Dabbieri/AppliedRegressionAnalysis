@@ -2,7 +2,11 @@
 title: "Case Studies"
 author: "Collin Dabbieri"
 date: "10/23/2019"
-output: html_document
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -11,12 +15,33 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(s20x)
+```
+
+# 30
+
+```{r}
+data (oysters.df)
+head(oysters.df)
+boxplot(Oysters~Site,ylab="Number of Oysters",main="Boxplot of Oysters by Site",data=oysters.df)
+oyster.fit<-lm(Oysters~Site,data=oysters.df)
+eovcheck(oyster.fit)
+oyster.fit<-lm(log(Oysters)~Site,data=oysters.df)
+eovcheck(oyster.fit)
+normcheck(oyster.fit,shapiro.wilk = T)
+summary1way(oyster.fit)
+multipleComp(oyster.fit)
+```
+
+# 31
+
+
+```{r}
 
 data(fruitfly.df)
 
 fruitfly.fit=lm(fecundity~strain,data=fruitfly.df)
 eovcheck(fruitfly.fit)
-normcheck(fruitfly.fit)
+normcheck(fruitfly.fit,shapiro.wilk = T)
 
 summary1way(fruitfly.fit)
 
@@ -24,5 +49,431 @@ summary1way(fruitfly.fit)
 multipleComp(fruitfly.fit)
 
 
+```
+
+
+
+# 32
+
+```{r}
+data (books.df)
+head(books.df)
+boxplot(length~book,main="Sentence length by book",xlab="book",ylab="length",data=books.df)
+book.fit<-lm(length~book,data=books.df)
+eovcheck(book.fit)
+normcheck(book.fit)
+book.fit1<-lm(log(length)~book,data=books.df)
+eovcheck(book.fit1)
+normcheck(book.fit1,shapiro.wilk = T)
+summary1way(book.fit1)
+multipleComp(book.fit1)
+```
+
+
+
+# 33
+
+```{r}
+data (skulls.df)
+head(skulls.df)
+boxplot(measurement~year,main="Skull measurements by year",xlab="year",ylab="skull measurement", data=skulls.df)
+summaryStats(measurement~year,data=skulls.df)
+skulls.df<-within(skulls.df,{year.F<-factor(year)})
+skull.fit<-lm(measurement~year.F,data=skulls.df)
+eovcheck(skull.fit)
+normcheck(skull.fit,shapiro.wilk = T)
+summary1way(skull.fit)
+multipleComp(skull.fit)
+```
+
+
+
+
+# 34
+
+```{r}
+data (apples.df)
+head(apples.df)
+boxplot(Weight~Rootstock,main="Apple tree weight by rootstock",ylab="weight",xlab="rootstock",data=apples.df)
+summaryStats(Weight~Rootstock,data=apples.df)
+boxplot(Weight~Propagated,main="Apple tree weight by propagation",ylab="weight",xlab="propagation",data=apples.df)
+summaryStats(Weight~Propagated,data=apples.df)
+propagation.fit<-lm(Weight~Propagated,data=apples.df)
+eovcheck(propagation.fit)
+normcheck(propagation.fit,shapiro.wilk = T)
+summary(propagation.fit)
+ciReg(propagation.fit)
+summary1way(propagation.fit)
+multipleComp(propagation.fit)
+t.test(Weight~Propagated,data=apples.df,var.equal=T)
+```
+
+
+
+# 35
+
+```{r}
+data (nail.df)
+boxplot(dry~polish,main="Drying times by polish",xlab="polish",ylab="time in seconds",data=nail.df)
+summaryStats(dry~polish,data=nail.df)
+nail.fit<-lm(dry~polish,data=nail.df)
+eovcheck(nail.fit)
+normcheck(nail.fit)
+anova(nail.fit)
+summary1way(nail.fit)
+t.test(dry~polish,var.equal=F,data=nail.df)
+```
+
+
+# 36
+
+```{r}
+data (course2way.df)
+head(course2way.df)
+boxplot(Exam~Gender, data=course2way.df)
+boxplot(Exam~Attend,data=course2way.df)
+fit1<-lm(Exam~Gender+Attend+Gender:Attend,data=course2way.df)
+eovcheck(fit1)
+normcheck(fit1,shapiro.wilk = T)
+summary(fit1)
+```
+
+
+```{r}
+#now remove interaction, as it's not significant
+fit2<-lm(Exam~Gender+Attend,data=course2way.df)
+eovcheck(fit2)
+normcheck(fit2,shapiro.wilk = T)
+summary2way(fit2)
+```
+
+```{r}
+# now remove gender, as it's not significant
+fit3<-lm(Exam~Attend,data=course2way.df)
+eovcheck(fit3)
+normcheck(fit3,shapiro.wilk = T)
+summary1way(fit3)
+multipleComp(fit3)
+
+```
+
+
+```{r}
+data(soyabean.df)
+head(soyabean.df)
+interactionPlots(yield~cultivar+planttime,data=soyabean.df)
+boxplot(yield~cultivar,data=soyabean.df)
+boxplot(yield~planttime,data=soyabean.df)
+fit1=lm(yield~planttime+cultivar+planttime:cultivar,data=soyabean.df)
+eovcheck(fit1)
+normcheck(fit1,shapiro.wilk = T)
+summary2way(fit1)
+
+```
+
+
+```{r}
+# now remove interaction term as it wasn't significant
+
+fit2=lm(yield~cultivar+planttime,data=soyabean.df)
+eovcheck(fit2)
+normcheck(fit2,shapiro.wilk = T)
+summary2way(fit2,page="table")
+summary2way(fit2,page="nointeraction")
+
+```
+
+# 38
+
+```{r}
+data(arousal.df)
+head(arousal.df)
+interactionPlots(arousal~picture+gender,data=arousal.df)
+fit1=lm(arousal~picture+gender+picture:gender,data=arousal.df)
+eovcheck(fit1)
+normcheck(fit1,shapiro.wilk = T)
+summary2way(fit1,page="table")
+summary2way(fit1,page="interaction")
+```
+
+
+```{r}
+gender.picture<-crossFactors(arousal.df$gender,arousal.df$picture)
+gender.picture<-factor(gender.picture)
+arousal.1way.fit<-lm(arousal.df$arousal~gender.picture)
+summary1way(arousal.1way.fit)
+multipleComp(arousal.1way.fit)
+```
+
+
+
+# 39
+
+```{r}
+data(butterfat.df)
+head(butterfat.df)
+interactionPlots(Butterfat~Breed+Age,data=butterfat.df)
+interactionPlots(Butterfat~Age+Breed,data=butterfat.df)
+fit1=lm(Butterfat~Breed+Age,data=butterfat.df)
+eovcheck(fit1)
+fit2=lm(log(Butterfat)~Breed+Age,data=butterfat.df)
+eovcheck(fit2)
+normcheck(fit2,shapiro.wilk = T)
+summary2way(fit2)
+fit3=lm(Butterfat~Breed,data=butterfat.df)
+eovcheck(fit3)
+
+```
+
+```{r}
+fit4=lm(log(Butterfat)~Breed,data=butterfat.df)
+eovcheck(fit4)
+normcheck(fit4,shapiro.wilk = T)
+summary1way(fit4)
+multipleComp(fit4)
+```
+
+
+# 40
+
+```{r}
+data(seeds.df)
+seeds.df
+head(seeds.df)
+interactionPlots(Count~Light+Water,data=seeds.df)
+interactionPlots(Count~Water+Light,data=seeds.df)
+seeds.df<-within(seeds.df,{Water.F<-factor(Water)})
+fit1=lm(Count~Water.F+Light+Water.F:Light,data=seeds.df)
+eovcheck(fit1)
+normcheck(fit1,shapiro.wilk = T)
+summary2way(fit1)
+```
+
+
+# 41
+
+```{r}
+data(sheep.df)
+head(sheep.df)
+interactionPlots(Weight~Copper+Cobalt,data=sheep.df)
+interactionPlots(Weight~Cobalt+Copper,data=sheep.df)
+fit1=lm(Weight~Cobalt+Copper+Cobalt:Copper,data=sheep.df)
+eovcheck(fit1)
+normcheck(fit1,shapiro.wilk = T)
+summary2way(fit1)
+```
+
+
+```{r}
+# Remove interaction
+
+fit2=lm(Weight~Copper+Cobalt,data=sheep.df)
+eovcheck(fit2)
+normcheck(fit2,shapiro.wilk = T)
+summary2way(fit2)
+```
+
+
+```{r}
+#Now remove Copper
+
+fit3=lm(Weight~Cobalt,data=sheep.df)
+eovcheck(fit3)
+normcheck(fit3,shapiro.wilk = T)
+summary1way(fit3)
+multipleComp(fit3)
+```
+
+
+# 42
+
+```{r}
+data(chalk.df)
+chalk.df
+chalk.df<-within(chalk.df,{Lab.F=factor(Lab)})
+interactionPlots(Density~Lab.F+Chalk,data=chalk.df)
+interactionPlots(Density~Chalk+Lab.F,data=chalk.df)
+fit1=lm(Density~Lab.F+Chalk,data=chalk.df)
+eovcheck(fit1)
+normcheck(fit1,shapiro.wilk = T)
+summary2way(fit1)
+```
+
+
+# 43
+
+```{r}
+data(mozart.df)
+mozart.df
+interactionPlots(Time~Period+Movement,data=mozart.df)
+interactionPlots(Time~Movement+Period,data=mozart.df)
+fit1=lm(Time~Period+Movement+Period:Movement,data=mozart.df)
+eovcheck(fit1)
+
+```
+
+
+
+```{r}
+#transform response
+fit2<-lm(log(Time)~Period+Movement+Period:Movement,data=mozart.df)
+eovcheck(fit2)
+normcheck(fit2,shapiro.wilk = T)
+summary2way(fit2,page="table")
+summary2way(fit2,page="interaction")
+```
+
+
+# Paintwear
+
+```{r}
+library(readxl)
+paint=read_excel("../../Dataxls/Excel/PAINTWEAR.xls")
+head(paint)
+boxplot(paint)
+hours=c(paint$PAINT1,paint$PAINT2,paint$PAINT3)
+PAINT_=factor(rep(c("PAINT1","PAINT2","PAINT3"),c(10,10,10)),levels=c("PAINT3","PAINT1","PAINT2"))
+hours
+PAINT_
+df=data.frame(hours=hours,PAINT_=PAINT_)
+head(df)
+model=lm(hours~PAINT_,data=df)
+summary(model)
+anova(model)
+```
+
+
+```{r}
+library(s20x)
+multipleComp(model)
+onewayPlot(model)
+```
+
+
+
+
+# Partial F
+
+```{r}
+eng=read_excel("../../Dataxls/Excel/COSTENG.XLS")
+head(eng)
+df=data.frame(ENG=factor(eng$ENGINEER),JOB=factor(eng$JOB),COST=eng$COST)
+head(df)
+```
+
+```{r}
+model_c=lm(COST~JOB+ENG,data=df)
+#we want to check if the ENG means are the same, use reduced model with only job terms
+model_r=lm(COST~JOB,data=df)
+anova(model_r,model_c)
+
+```
+
+it is plausible that the underlying engineer means are the same
+
+is our blocking effective?
+
+```{r}
+model_r2=lm(COST~ENG,data=df)
+anova(model_r2,model_c)
+```
+
+Yes our blocking was effective
+
+```{r}
+model.matrix(model_c)
+```
+
+```{r}
+paint=read_excel("../../Dataxls/Excel/PAINTWEAR.xls")
+head(paint)
+HOURS=c(paint$PAINT1,paint$PAINT2,paint$PAINT3)
+PAINT_=factor(rep(c("PAINT1","PAINT2","PAINT3"),c(10,10,10)),levels=c("PAINT3","PAINT1","PAINT2"))
+model=lm(HOURS~PAINT_)
+summary(model)
+summary1way(model)
+```
+
+
+
+```{r}
+data(nail.df)
+head(nail.df)
+model=lm(dry~polish,data=nail.df)
+eovcheck(model)
+model2=lm(log(dry)~polish,data=nail.df)
+eovcheck(model2)
+normcheck(model2,shapiro.wilk = T)
+summary1way(model2)
+```
+
+
+
+
+```{r}
+X=matrix(c(1,0,0,0,
+           1,0,1,0,
+           1,0,0,1,
+           1,1,0,0,
+           1,1,1,0,
+           1,1,0,1),nrow=6,ncol=4,byrow=TRUE)
+A=matrix(c(1,0,0,0,0,0,
+           0,0,0,1,0,0,
+           0,1,0,0,0,0,
+           0,0,0,0,1,0,
+           0,0,1,0,0,0,
+           0,0,0,0,0,1),nrow=6,ncol=6,byrow=TRUE)
+A%*%X
+```
+
+```{r}
+Ex1=c(40,50,60)
+Ex2=c(50,60,74)
+
+exams=c(40,50,60,50,60,74)
+blocks=c("B1","B2","B3","B1","B2","B3")
+treatments=c("T1","T1","T1","T2","T2","T2")
+model_c=lm(exams~blocks+treatments)
+#want to know if treatment means are different
+model_r=lm(exams~blocks)
+anova(model_r,model_c)
+
+B=rep(c(1,2,3),2)
+Tr=rep(c("T1","T2"),c(3,3))
+B
+Tr
+
+#was our blocking effective?
+model_r2=lm(exams~treatments)
+anova(model_r2,model_c)
+```
+
+
+
+
+
+```{r}
+paint=read_excel("../../Dataxls/Excel/PAINTWEAR.xls")
+head(paint)
+HOURS=c(paint$PAINT1,paint$PAINT2,paint$PAINT3)
+PAINT_=rep(c("PAINT1","PAINT2","PAINT3"),c(10,10,10))
+model=lm(HOURS~PAINT_)
+eovcheck(model)
+normcheck(model,shapiro.wilk = T)
+summary(model)
+boxplot(paint)
+```
+
+
+```{r}
+eng=read_excel("../../Dataxls/Excel/COSTENG.XLS")
+head(eng)
+ENG=factor(eng$ENGINEER)
+JOB=factor(eng$JOB)
+COST=eng$COST
+
+model_c=lm(COST~ENG+JOB)
+model_r=lm(COST~JOB)
+anova(model_r,model_c)
 ```
 

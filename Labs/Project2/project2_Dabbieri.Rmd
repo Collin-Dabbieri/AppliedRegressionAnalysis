@@ -1,0 +1,706 @@
+---
+title: "MATH 4773 Project 2"
+author: "Collin Dabbieri"
+date:  "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+    csl: biomed-central.csl
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    number_sections: yes
+    theme: journal
+    toc: yes
+    toc_float: yes
+   
+  word_document:
+    toc: yes
+    toc_depth: 4
+  pdf_document:
+    df_print: kable
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+bibliography: project.bib
+abstract: Data from 54 NBA basketball players from 1989 are provided. A multiple linear regression model is used to model the response, points per game, as a function of height, weight, field goal percentage, and free throw percentage. The Akaike information criterion is used to determine the best model for the data, and a model with 2 interaction terms is selected. It is determined that the data has nonconstant variance so a log transformation is used for the response. Many plots are provided and some of the underlying theory for multiple linear regression is discussed.
+--- 
+
+<center>
+
+![Collin Dabbieri](Picture.jpg "My Picture"){ width=40% }
+
+</center>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# Introduction
+
+![1989 NBA Finals](1989Finals.jpg "NBA Finals"){ width=60% }
+
+
+
+
+## What are the Variables?
+
+```{r}
+library(readxl)
+basketball=read.csv("BASKETBALL.csv")
+colnames(basketball)=c("Height","Weight","FGP","FTP","PPG")
+head(basketball)
+dim(basketball)
+```
+
+
+The data, from @Basketball, contains the height, in feet, the weight, in pounds, the field goal percentage (FGP), the free throw percentage (FTP) and the points per game (PPG) for 54 NBA basketball players. The data was collected and published by Cengage as a dataset for multiple linear regression. I imagine height and field goal percentage will be strong predictors of points per game.
+
+## Plot Data
+
+```{r carcharacteristics, fig.height = 5, fig.cap = "Basketball",fig.align='center',fig.cap="Graph of data with loess smoother"}
+library(ggplot2)
+g = ggplot(basketball, aes(x = FGP, y = PPG, color = Height)) + geom_point()
+g = g + geom_smooth(method = "loess")
+g
+```
+
+
+We can make some 3D plots of pairs of independent variables, along with some linear fits.
+
+```{r}
+library(car)
+library(rgl)
+mfrow3d(3,2)
+
+#the pairs we actually want here are (1,2),(1,3),(1,4),(2,3),(2,4),(3,4)
+scatter3d(PPG~Height+Weight,basketball, fit="linear")
+scatter3d(PPG~Height+FGP,basketball, fit="linear")
+scatter3d(PPG~Height+FTP,basketball, fit="linear")
+scatter3d(PPG~Weight+FGP,basketball, fit="linear")
+scatter3d(PPG~Weight+FTP,basketball, fit="linear")
+scatter3d(PPG~FGP+FTP,basketball, fit="linear")
+
+
+rglwidget()
+
+```
+
+We can see that there seems to be a lot of spread in the data with respect to each fit. The data don't seem to follow the fits very well. To me this implies some interaction terms will be necessary.
+
+
+
+
+Our intuition tells us that height and weight would be correlated. Further illustrating this below. This suggests that there should be an interaction term for height and weight.
+
+```{r}
+library(ggplot2)
+g = ggplot(basketball, aes(x = Weight, y = Height, color = PPG)) + geom_point()
+g = g + geom_smooth(method = "loess")
+g
+```
+
+
+
+
+## Potential Further Research
+
+@Basketball was published in 1989, so certain aspects of how players performed in the NBA will be significantly different than they would be in the modern NBA. For example the 3 point shot was much less prominent back then. In 1989-1990 the league leader for 3 pointers was Michael Adams with 158, in the 2018-2019 season the league leader was James Harden with 378 @BasketballStats. Histograms from @BasketballStats showing each NBA players' number of successfull 3 point shots for the 1989-1990 season and the 2018-2019 season are plotted below.  I imagine this means that this dataset will favor things like height and weight more than a more current NBA dataset would. That would be an interesting avenue for further research.
+
+```{r}
+stats1989=read.csv("Leaders_Stats.csv")
+stats2019=read.csv("Leader_Stats_2019.csv")
+hist(stats1989$X3P.,xlab = "Successfull 3 Pointers",main = "Histogram of 1989 NBA Players' 3 Pointers")
+hist(stats2019$X3P.,xlab="Successfull 3 Pointers",main="Histogram of 2019 NBA Players' 3 Pointers")
+```
+
+
+
+
+
+## How were the data collected?
+
+Since there's so much money on the line, statistics are pretty rigorously tracked for professional sports. Although baseball is notorious for favoring analytics, basketball has also increasingly favored a statistical approach to running a team. Stats are tracked both for the benefit of the team owners, but also for the entertainment of the fans. Sports commentators rely heavily on statistics to discuss teams progress and predict their future ability.
+
+## What is the story behind the data?
+
+Here's a map of all current NBA stadiums. This is slightly different than what was current in 1989 but the idea is the same.
+
+```{r}
+library(leaflet)
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=-84.396, lat=33.757, popup="Atlanta Hawks") %>%
+  addMarkers(lng=-71.062, lat=42.366, popup="Boston Celtics") %>%
+  addMarkers(lng=-73.975, lat=40.683, popup="Brooklyn Nets") %>%
+  addMarkers(lng=-80.839, lat=35.225, popup="Charlotte Hornets") %>%
+  addMarkers(lng=-87.675, lat=41.881, popup="Chicago Bulls") %>%
+  addMarkers(lng=-81.688, lat=41.497,popup="Cleveland Cavaliers")%>%
+  addMarkers(lng=-96.81, lat=32.791, popup="Dallas Mavericks") %>%
+  addMarkers(lng=-105.0, lat=39.749, popup="Denver Nuggets") %>%
+  addMarkers(lng=-83.055, lat=42.341, popup="Detroit Pistons") %>%
+  addMarkers(lng=-122.203, lat=37.75, popup="Golden State Warriors") %>%
+  addMarkers(lng=-95.362, lat=29.751, popup="Houston Rockets") %>%
+  addMarkers(lng=-86.156, lat=39.764, popup="Indiana Pacers") %>%
+  addMarkers(lng=-118.267, lat=34.043, popup="LA Clippers") %>%
+  addMarkers(lng=-118.267, lat=34.043, popup="LA Lakers") %>%
+  addMarkers(lng=-90.052, lat=35.156, popup="Memphis Grizzlies") %>%
+  addMarkers(lng=-80.187, lat=25.781, popup="Miami Heat") %>%
+  addMarkers(lng=-87.917, lat=43.045, popup="Milwaukee Bucks") %>%
+  addMarkers(lng=-93.276, lat=44.98, popup="Minnesota Timberwolves") %>%
+  addMarkers(lng=-90.082, lat=29.949, popup="New Orleans Pelicans") %>%
+  addMarkers(lng=-73.993, lat=40.751, popup="New York Knicks") %>%
+  addMarkers(lng=-97.515, lat=35.463, popup="Oklahoma City Thunder") %>%
+  addMarkers(lng=-81.384, lat=28.539, popup="Orlando Magic") %>%
+  addMarkers(lng=-75.172, lat=39.901, popup="Philadelphia 76ers") %>%
+  addMarkers(lng=-112.071, lat=33.446, popup="Phoenix Suns") %>%
+  addMarkers(lng=-122.667, lat=45.532, popup="Portland Trail Blazers") %>%
+  addMarkers(lng=-121.5, lat=38.58, popup="Sacramento Kings") %>%
+  addMarkers(lng=-98.438, lat=29.427, popup="San Antonio Spurs") %>%
+  addMarkers(lng=-79.379, lat=43.644, popup="Toronto Raptors") %>%
+  addMarkers(lng=-111.901, lat=40.768, popup="Utah Jazz") %>%
+  addMarkers(lng=-77.021, lat=38.898, popup="Washington Wizards")
+  
+m  # Print the map
+```
+
+
+
+## What problem do you wish to solve?
+
+The goal of the analysis will be to develop a multiple regression model with points per game as the response. Through this process we will learn which of our x variables are important predictors of points per game and which interaction terms are necessary. We can use our final model to get a prediction interval for points per game based on our x variables. This prediction interval could be very useful for predicting new players' points per game (assuming field goal percentage and free throw percentage from college or previous teams will stay constant in the NBA). This type of information could be very useful for team owners.
+
+# Theory needed to carry out MLR
+
+The following theory gives a better idea of what R is doing under the hood when using the lm method.
+
+## Estimate of $\beta$
+
+For simplicity, we'll first ignore interaction terms. If our response, y,  is modelled by four independent variables, $x_1$, $x_2$, $x_3$, and $x_4$, we can express the response as
+
+$$y=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_3+\beta_4x_4+\epsilon$$
+
+Where $\epsilon$ is the uncertainty in the response. Here's where an assumption comes in, we assume $\epsilon$ ~ $N(0,\sigma^2)$. That is, we assume $\epsilon$ is distributed normal with a mean of 0 and constant variance. With this assumption we can say the following
+
+$$E(y)=\hat{\beta_0}+\hat{\beta_1}x_1+\hat{\beta_2}x_2+\hat{\beta_3}x_3+\hat{\beta_4}x_4$$
+
+Generalizing to any number of independent variables we can create the following matrix
+
+```{r}
+X=matrix(data=c("1","1","1","...","1","x11","x21","x31","...","xn1","x12","x22","x32","...","xn2","...","...","...","...","...","x1k","x2k","x3k","...","xnk"),nrow=5,ncol=5)
+print(X)
+```
+
+The first column represents the terms that will be multiplied by $\hat{\beta_0}$, the second column contains the values of $x_1$, and so on. Notice it has shape nx(k+1) If our response vector, Y,  and our $\epsilon$ vector were of shape, nx1, and our $\beta$ vector was of shape (k+1)x1 then we could have the following result
+
+$$Y=X\beta+\epsilon$$
+
+Now we're going to work out a method of determining point estimates for the $\beta$'s. Following the previous equation
+
+$$Y-X\hat{\beta}=\hat{\epsilon}$$
+
+$$X'(Y-X\hat{\beta})=X'\hat{\epsilon}$$
+
+Now $X'$ has shape (k+1)xn and $\hat{\epsilon}$ has shape nx1 so our right side will have shape (k+1)x1. However, since $\hat{\epsilon}$ is perpendicular to the column space of X we have $X'\hat{\epsilon}=0$ where in this case 0 is the 0 matrix of shape (k+1)x1.
+
+$$X'(Y-X\hat{\beta})=0$$
+
+$$X'Y-X'X\hat{\beta}=0$$
+
+$$X'Y=X'X\hat{\beta}$$
+
+$$(X'X)^{-1}X'Y=(X'X)^{-1}(X'X)\hat{\beta}$$
+
+Now, assuming (X'X) is invertible
+
+$$(X'X)^{-1}X'Y=I\hat{\beta}$$
+
+$$\hat{\beta}=(X'X)^{-1}X'Y$$
+
+## Estimate of $\sigma^2$
+
+
+Next we'll derive an estimator of the variance of $\epsilon$, $s^2$. First we'll need to define H
+
+$$H=X(X'X)^{-1}X'$$
+
+We can also provide a few identities (proof has been left as an exercise for the reader)
+
+$$H'=H$$
+
+$$H^2=H$$
+$$(I-H)'=I-H$$
+
+$$(I-H)^2=I-H$$
+
+$$HX=X$$
+
+Now the formula for $s^2$ is
+
+$$s^2=\frac{SSE}{n-(k+1)}$$
+
+where SSE is the sum of squared residuals, $\sum r_i^2$. It can be shown that
+
+$$SSE=\hat{\epsilon}'\hat{\epsilon}$$
+
+Where, from above,
+
+$$\hat{\epsilon}=Y-X\hat{\beta}=Y-HY=(I-H)Y$$
+
+and its transpose 
+
+$$\hat{\epsilon}'=[(I-H)Y]'=Y'(I-H)'=Y'(I-H)$$
+
+Therefore
+
+$$SSE=\hat{\epsilon}'\hat{\epsilon}=Y'(I-H)(I-H)Y$$
+
+and because $(I-H)^2=I-H$
+
+$$SSE=\hat{\epsilon}'\hat{\epsilon}=Y'(I-H)Y$$
+
+Now let's try and solve for $\hat{\epsilon}$ in a different way
+
+$$\hat{\epsilon}=Y-HY$$
+
+$$Y=X\beta+\epsilon$$
+
+$$\hat{\epsilon}=X\beta+\epsilon-H(X\beta+\epsilon)$$
+
+$$\hat{\epsilon}=X\beta+\epsilon-HX\beta-H\epsilon$$
+
+$$\hat{\epsilon}=\epsilon-H\epsilon$$
+
+$$\hat{\epsilon}=(I-H)\epsilon$$
+
+But we know from above that $\hat{\epsilon}=(I-H)Y$, so we have the following
+
+$$(I-H)\epsilon=(I-H)Y$$
+
+and therefore
+
+
+$$SSE=\hat{\epsilon}'\hat{\epsilon}=\epsilon'(I-H)\epsilon$$
+
+We can use spectral decomposition to expand I-H out as a sum
+
+$$SSE=\hat{\epsilon}'\hat{\epsilon}=\epsilon'(\sum_{i=1}^n\lambda_ie_ie_i')\epsilon$$
+
+Where $\lambda_i$ are the eigenvalues and $e_i$ are the eigenvectors of (I-H)
+
+Because (I-H) is both symmetric and idempotent, $\lambda_i$ will always be either 0 or 1, and the number of 1's is given by the trace of (I-H)
+
+$$tr(I-H)=\sum_{i=1}^n\lambda_i$$
+
+$$tr(I)-tr(H)=\sum_{i=1}^n\lambda_i$$
+
+$$n-(k+1)=\sum_{i=1}^n\lambda_i$$
+
+So we can simplify our residual sum of squares to the following
+
+$$SSE=\hat{\epsilon}'\hat{\epsilon}=\sum_{i=1}^{n-(k+1)}\epsilon'e_ie_i'\epsilon$$
+
+$$SSE=\sum_{i=1}^{n-(k+1)}(e_i'\epsilon)^2$$
+
+Now we define a variable $v_i$ such that $v_i=e_i\epsilon$~$N(0,\sigma^2)$
+
+$$\frac{SSE}{\sigma^2}=\sum_{i=1}^{n-(k+1)}(\frac{v_i}{\sigma_i})^2$$
+
+It's clear that we've made a z statistic with $\frac{v_i}{\sigma_i}$ as it's distributed N(0,1)
+
+$$\frac{SSE}{\sigma^2}=\sum_{i=1}^{n-(k+1)}z_i^2$$
+
+From @Chisquare, if $z_1,z_2,...,z_k$ are independent, standard normal random variables, then their sum of squares is distributed $\chi^2$ with k degrees of freedom, therefore
+
+$$\frac{SSE}{\sigma^2}\sim\chi^2_{n-(k+1)}$$
+
+$$E(\frac{SSE}{\sigma^2})=E(\chi^2_{n-(k+1)})=n-(k+1)$$
+
+
+$$E(\frac{SSE}{n-(k+1)})=\sigma^2$$
+
+Therefore $\frac{SSE}{n-(k+1)}$ is an estimator of $\sigma^2$!
+
+$$s^2=\frac{SSE}{n-(k+1)}$$
+
+In order to make this easy to calculate, we can do some matrix algebra to find a form for SSE, proof has been left as an exercise for the reader.
+
+$$SSE=Y'X-\hat{\beta}'X'Y$$
+
+## Interval estimate for $\beta$
+
+Finally we'll derive a way to get confidence intervals for your $\beta$ parameters. Let's define scalar l as any linear combination of $\beta$'s.
+
+$$l=a'\beta$$
+where a has shape (k+1)x1. It can be easily shown that 
+
+$$\hat{l}\sim N(a'\beta,\sigma^2a'(X'X)^{-1}a)$$
+
+We're going to use the T statistic as our pivotal statistic
+
+$$T=\frac{Z}{\sqrt{\frac{\chi^2}{\nu}}}$$
+
+Our Z is given by
+
+$$Z=\frac{\hat{l}-E(\hat{l})}{\sigma_{\hat{l}}}$$
+
+and our $\chi^2=\frac{[n-(k+1)]s^2}{\sigma^2}$. We need to determine $V(\hat{l})$ to fill out our Z statistic.
+
+$$V(\hat{l})=V(a'\beta)=a'cov(\hat{\beta})a$$
+
+$$cov(\hat{\beta})=cov((X'X)^{-1}X'Y)=(X'X)^{-1}X'cov(Y)[(X'X)^{-1}X']'$$
+
+$$cov(Y)=cov(\epsilon)=\sigma^2I$$
+
+$$cov(\hat{\beta})=(X'X)^{-1}X'\sigma^2I[(X'X)^{-1}X']'$$
+
+$$cov(\hat{\beta})=\sigma^2(X'X)^{-1}X'X(X'X)^{-1}$$
+
+$$cov(\hat{\beta})=\sigma^2(X'X)^{-1}$$
+
+$$V(\hat{l})=\sigma^2a'(X'X)^{-1}a$$
+
+Now we know our Z
+
+$$Z=\frac{a'\hat{\beta}-a'\beta}{\sigma\sqrt{a'(X'X)^{-1}a}}$$
+
+And we can fill out our T
+
+$$T=\frac{a'\hat{\beta}-a'\beta}{\sigma\sqrt{a'(X'X)^{-1}a}}\frac{1}{\sqrt{\frac{\frac{[n-(k+1)]s^2}{\sigma^2}}{n-(k+1)}}}$$
+
+Luckily we can simplify $\frac{\chi^2}{\nu}$
+
+$$\chi^2=\frac{[n-(k+1)]s^2}{\sigma^2}$$
+
+$$\frac{\chi^2}{\nu}=\frac{[n-(k+1)]s^2}{[n-(k+1)]\sigma^2}=\frac{s^2}{\sigma^2}$$
+
+$$T=\frac{\frac{\hat{l}-l}{\sigma\sqrt{a'(X'X)^{-1}a}}}{\sqrt{\frac{s^2}{\sigma^2}}}=\frac{\hat{l}-l}{s\sqrt{a'(X'X)^{-1}a}}$$
+
+
+Now using our T distribution
+
+$$P(-t_{\alpha/2}\leq T \leq t_{\alpha/2})=1-\alpha$$
+
+$$P(-t_{\alpha/2}\leq \frac{\hat{l}-l}{s\sqrt{a'(X'X)^{-1}a}} \leq t_{\alpha/2})=1-\alpha$$
+
+Therefore a $100(1-\alpha)$% confidence interval for $l=a'\beta$ is given by
+
+$$a'\hat{\beta} \pm t_{\alpha/2}s\sqrt{a'(X'X)^{-1}}a$$
+
+
+## Main result 1
+
+$$Y=X\beta+\epsilon$$
+
+## Main result 2
+
+$$\hat{\beta}=(X'X)^{-1}X'Y$$
+
+## Main result 3
+
+$$s^2=\frac{SSE}{n-(k+1)}$$
+
+## Main result 4
+
+a $100(1-\alpha)$% confidence interval for $l=a'\beta$ is given by
+
+$$a'\hat{\beta} \pm t_{\alpha/2}s\sqrt{a'(X'X)^{-1}}a$$
+
+## Assumptions
+
+$\epsilon$ ~ $N(0,\sigma^2)$
+
+(X'X) is invertible
+
+
+# Model selection
+
+the step() function was used to select the best model. It had no problem running both forward and backward with all of the data so multicollinearity does not seem to be an issue for this data. The forward and backward iterations found different final models so the model with lowest AIC was selected. That model was
+
+$$E(y)=\beta_0+\beta_1x_1+\beta_2x_2+\beta_3x_3+\beta_4x_4+\beta_5x_1x_2+\beta_6x_1x_3$$
+
+where y is PPG, $x_1$ is Height, $x_2$ is Weight, $x_3$ is FGP, and $x_4$ is FTP.
+
+
+## AIC
+
+AIC or Akaike Information Criterion @AIC is a measure of the success of a model fit, it is defined as 
+
+$$AIC=2k-2ln(L)$$
+
+Where k is the number of parameters of the model and L is the maximum likelihood of the model. Good models are those that have low AIC. Although AIC is not an empirical measure, and so it can only be used to compare different models for the same data. Notice that this measure contains a penalty for the complexity of the model.
+
+We're going to use step to iterate through a series of models. Step will select new models based on AIC and return a final model along with its AIC value.
+
+```{r}
+null=lm(PPG~1,data=basketball)
+full=lm(PPG~.^2,data=basketball)
+step(null, scope=list(lower=null, upper=full), direction="forward")
+```
+
+
+```{r}
+step(full, data=cast, direction="backward")
+```
+
+The forward and backward iterations return different models, so we'll take the model with lowest AIC
+
+```{r}
+model=lm(PPG~Height+Weight+FGP+FTP+Height:Weight+Height:FGP,data=basketball)
+```
+
+
+## Adjusted $R^2$ 
+
+$R^2$ is a measure of the proportion of the variability in the data that the model picks up on. $R^2_{adj}$ is a similar measure that also contains a penalty for model complexity. $R^2$ is defined as 1 minus the residual sum of squares over the total sum of squares
+
+$$R^2=1-\frac{SSE}{TSS}$$
+
+$$R_{adj}^2 =1-\frac{(1-R^2)(n-1)}{n-k-1}$$
+
+where n is the number of data points and k is the number of parameters in the model.
+
+
+## Checks on validity
+
+
+### Errors distributed Normally
+
+$$\epsilon_i \sim N(0,\sigma^2)$$
+
+
+
+#### Shapiro-wilk
+
+One of our assumptions from above is that our errors are distributed normal. We can check that with the Shapiro-Wilk test, which tests the NULL hypothesis that the residuals are distributed normal.
+
+```{r}
+library(s20x)
+
+normcheck(model,shapiro.wilk=T)
+```
+
+We can see that with a p-value of 0.051 we can just barely accept the NULL of normally distributed residuals as plausible at the 95% confidence level.
+
+### Constant variance
+
+Another model assumption is that the variance is constant, we can check this by plotting the residuals from the model against their fitted values. If there's a fan shape (the spread in residuals is greater for greater fitted values or vice versa), then we can say the variance appears to be non-constant
+
+#### Residual vs. fitted values
+
+```{r}
+eovcheck(model)
+```
+
+It's difficult to conclusively say anything here. Around fitted values of 14 you see a wider spread in the residuals but there is more data in this region, so there are also more values close to zero. We can try transforming the response and see if that improves the fit
+
+```{r}
+logmodel=lm(log(PPG)~Height+Weight+FGP+FTP+Height:Weight+Height:FGP,data=basketball)
+eovcheck(logmodel)
+```
+
+The model with transformed response appears to have data where we can more plausibly say the variance is constant. Let's see if it has a better $R^2$ value
+
+```{r}
+summary(model)
+summary(logmodel)
+```
+
+The multiple $R^2$ for the model with transformed response is better. Next let's check to see if the model with transformed response has errors distributed normal.
+
+```{r}
+normcheck(logmodel,shapiro.wilk=T)
+```
+
+Our p-value for the NULL that errors are distributed normal is much higher for the model with transformed response. We can plausibly say that this model has normally distributed errors.
+
+It seems that the model with transformed response is better, we're going to stick with this model going forward.
+
+
+### Zero mean value of $\epsilon$
+
+By plotting a histogram of the residuals, we can see if the errors appear to have a mean value of 0
+
+```{r}
+hist(logmodel$residuals)
+mean(logmodel$residuals)
+sd(logmodel$residuals)
+```
+
+The mean value of the residuals is extremely close to zero. So we can confidently say it is plausible that $\epsilon$ has a mean of 0.
+
+### Independence of data 
+
+One could think that if teams average a certain number of points per game, than if one player scores a lot of points, there are less points available for other players to score. In this sense one could say that our data is not quite independent. However, there are many individual players on one basketball team and many teams in the NBA so I would suggest that the contributions from one player do not significantly affect the potential contributions of other players. Additionally, each data point corresponds to one NBA player, so we don't run the risk of one player appearing in multiple points and biasing the results. Therefore I would suggest that the data is independent.
+
+
+# Analysis of the data
+
+## Summary lm object
+
+```{r}
+summary(logmodel)
+```
+
+### Interpretation of F statistic
+As one would expect, step selected a model that is adequate, meaning we can reject the null
+
+$$H_0:\beta_1=\beta_2=\beta_3=\beta_4=\beta_5=\beta_6=0$$
+
+at the 95% confidence level with the p-value of the F test of $3.793x10^{-5}$.
+
+### Interpretation of T statistic
+
+Because we used step() and the AIC to select this particular model, we're not going to remove terms deemed insignificant by the T-test. Although the Height term has the highest p-value for the T statistic, it has interaction terms which are deemed significant by the T statistic. If we were updating the model, we would first remove FTP, as this is the only term that has a p-value greater than 0.05, and no interaction terms in the model.
+
+### Interpretation of Multiple $R^2$
+
+Our multiple $R^2$ value is actually quite low, 0.4596. My feeling is that the model does not have enough information to accurately predict points per game. For example something like field goal percentage might be useful, but a high field goal percentage is not going to translate to high points per game if, for example, minutes played per game is low.
+
+### Interpretation of all point estimates
+
+Free throw percentage is our only variable without any interaction term, because $\hat{\beta_0}$ is positive, we can conclude that the data suggests a positive correlation betweem free throw percentage and points per game. Our other variables have interaction terms which makes such an analysis more complicated.
+
+## Calculate cis for $\beta$ parameter estimates
+
+Recall these confidence intervals are calculated using
+
+$$a'\hat{\beta} \pm t_{\alpha/2}s\sqrt{a'(X'X)^{-1}}a$$
+
+Where the a vector is used to pick out the $\beta$ parameter of interest. For $\beta_0$, a'=[1,0,0,0,0,0,0]
+
+```{r}
+library(s20x)
+ci=ciReg(logmodel)
+```
+
+
+### Use of `predict()`
+
+Let's say we had an incoming college basketball player who had declared for the NBA draft, and we wanted to get an idea of how many points per game he might score in the NBA. He's 6'6", 240 pounds with a college field goal percentage of 45% and a free throw percentage of 80%. If we assume his free throw percentage and field goal percentage will stay constant in the NBA (quite a big assumption), we can predict his points per game in the NBA using our model.
+
+```{r}
+new.data=data.frame(Height=6.5,Weight=240,FGP=0.45,FTP=0.80)
+logpred=predict(logmodel,new.data)
+exp(logpred)
+```
+
+The model predicts that this player will average about 12 points per game in the NBA.
+
+
+### Use of `confint()`
+```{r}
+confint(logmodel)
+```
+
+## Check on outliers using cooks plots
+
+Cook's distance (@Cook) is a measure of the influence of an individual data point on a regression model. It measures the change in the model brought about by deleting an individual data point. Points with a large Cook's distance should be further examined for validity. In @cook1982residuals, it is suggested that Cook's distance values greater than 1 can be used to identify outliers.
+
+```{r}
+cooks20x(logmodel)
+```
+
+
+Our point with largest Cook's distance has a value of less than one, none of our points seem to be significant outliers.
+
+## Pairs plot
+```{r}
+pairs(basketball)
+```
+
+We can see why the model has a pretty low $R^2$, there don't seem to be any strong trends between PPG and any of our independent variables.
+
+## 3D model plots
+
+We can make a series of 3D plots, where x and y are represented by 2 of either Height, Weight, FGP, or FTP and z is represented by PPG. We can plot the model fit, where independent variables that are not plotted are given their mean values
+
+```{r}
+library(rgl)
+means=c(mean(basketball$Height),mean(basketball$Weight),mean(basketball$FGP),mean(basketball$FTP))
+X=matrix(,nrow=length(basketball$PPG),ncol=4)
+X[,1]=basketball$Height
+X[,2]=basketball$Weight
+X[,3]=basketball$FGP
+X[,4]=basketball$FTP
+nms_X=c("Height","Weight","FGP","FTP")
+nms=c("Height","Weight","FGP","FTP","log(PPG)")
+
+open3d()
+mfrow3d(3,2)
+
+#the pairs we actually want here are (1,2),(1,3),(1,4),(2,3),(2,4),(3,4)
+pairs=matrix(data=c(1,1,1,2,2,3,2,3,4,3,4,4),nrow=6,ncol=2)#column 1 is i, column 2 is j
+
+for(b in 1:6){
+  i=pairs[b,1]
+  j=pairs[b,2]
+  
+  #pick a range of values for x1 and x2
+  sampling=20
+  x1_vals=seq(from=min(X[,i]),to=max(X[,i]),length.out=sampling)
+  x2_vals=seq(from=min(X[,j]),to=max(X[,j]),length.out=sampling)
+  
+  x1_plot=c()
+  x2_plot=c()
+  y_plot=c()
+  
+  for(k in 1:length(x1_vals)){ #k is index of x1_vals
+    for(l in 1:length(x2_vals)){ #l is index of x2_vals
+      x1_val=x1_vals[k]
+      x2_val=x2_vals[l]
+      
+      means_temp=means
+      means_temp[i]=x1_val
+      means_temp[j]=x2_val #now means_temp has our selected variables plus means in all other spots
+
+      new.data=data.frame(Height=means_temp[1],Weight=means_temp[2],FGP=means_temp[3],FTP=means_temp[4])
+      
+      y_pred=predict.lm(logmodel,new.data)
+      
+      x1_plot=append(x1_plot,x1_val)
+      x2_plot=append(x2_plot,x2_val)
+      y_plot=append(y_plot,y_pred)
+      
+    }
+  }
+  #open3d()
+  
+  plot3d(x1_plot,x2_plot,y_plot,xlab=nms[i],ylab=nms[j],zlab=nms[length(nms)])
+  #next3d()
+}
+
+
+rglwidget()
+```
+
+We can see that when Height and Weight or Height and FGP are our x and y axis, the model does not return a flat plane. That is because these pairs were given interaction terms in the model.
+
+
+# Conclusion
+
+## Research Question
+
+We were able to develop a multiple regression model for the data. We determined that the data appears to have nonconstant variance. We resolved this problem by using a log transformation of the response. This transformation appears to have improved our model fit. The step() function chose a model with all four terms (Height, Weight, FGP, and FTP) as well as interaction terms for Height:Weight, and Height:FGP. The model is adequate at the 95% confidence level. 
+
+## Ways to Improve the Model
+
+Our $R^2$ value is quite low. There are a few ways the model could have been improved. Firstly, there is so much data publicly available regarding NBA players' performance. The addition of extra independent variables could have improved the model. I imagine a statistic like minutes played per game would be very useful for predicting points per game. This could still help team owners looking to predict a draft prospect's performance as they could decide how many minutes per game they are planning on giving the prospect.
+
+Next, the dataset includes only 54 players, which is significantly less than the number of players with a decent amount of playtime in the NBA for a given season. Since all of this data should be readily available for all NBA players, increasing the size of the dataset should not be too difficult. I imagine this would also significantly improve the model.
+
+Finally, it would be interesting to pull data from different eras of the NBA and see which independent variables are the most important predictors of points per game for each era. This could give you an idea of how the league has evolved over time.
+
+
+# References
+  
