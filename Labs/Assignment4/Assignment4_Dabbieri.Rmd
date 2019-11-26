@@ -1,0 +1,249 @@
+---
+title: "Assignment 4"
+author: "Collin Dabbieri"
+date: "11/26/2019"
+output: 
+  html_document:
+    toc: yes
+    toc_float: yes
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Fraction Completed: 8/8
+
+# 1. 15.1
+
+Scientists at the University of Florida College of Medicine investigated the level of caffeine in 16-ounce cups of Starbucks' coffee. In one phase of the experiment, cups of Starbucks Breakfast Blend were purchased on six consecutive days from a single specialty coffee shop. The amount of caffeine in each of the 6 cups (measured in milligrams) is provided.
+
+```{r}
+caffeine=c(564,498,259,303,300,307)
+```
+
+
+## a.
+
+Suppose scientists are interested in determining whether the median amount of caffeine in Breakfast Blend coffee exceeds 300 milligrams. Set up the null and alternate hypotheses of interest
+
+$$H_0: median\:amount\:of\:caffeine = 300 mg$$
+
+$$H_a: median\:amount\:of\:caffeine > 300 mg$$
+
+S=number of cups with caffeine > 300 mg
+
+p-value=P(x$\geq$S) where x~binomial n=6, p=0.5
+
+## b. 
+
+How many cups in the sample have a caffeine content that exceeds 300 milligrams?
+
+4 out of the 6 cups
+
+## c.
+
+Assuming p=0.5, find the probability that at least 4 of the 6 cups have caffeine amounts that exceed 300 milligrams.
+
+$$P(at\:least\:4\:cups>300mg)=1-P(3\:or\:fewer\:cups>300mg)$$
+
+```{r}
+1-pbinom(3,6,0.5)
+```
+
+## d.
+
+Based on the probability, what do you conclude about $H_0$ and $H_a$?
+
+Using $\alpha=0.05$, we can not reject the null that the median amount of caffeine in Breakfast Blend equals 300 mg.
+
+
+# 2. 15.2
+
+Refer to the American Journal of Physical Anthropology study of the characteristics of cheek teeth in an extinct primate species. Recall that the researchers measured the dentary depth of molars for 18 cheek teeth extracted from skulls. These depth measurements are reproduced below. The researchers are interested in the median molar depth of all cheek teeth from this extinct primate species. In particular, they want to know if the population median differs from 15 mm.
+
+```{r}
+cheekteeth=c(18.12,19.48,19.36,15.94,15.83,19.70,15.76,17.00,16.20,13.96,16.55,15.70,17.83,13.25,16.12,18.13,14.02,14.04)
+```
+
+
+## a.
+
+Specify the null and alternate hypothesis of interest to the researchers
+
+
+$$H_0:\tau=15 mm$$
+
+$$H_a:\tau \neq 15 mm$$
+
+where $\tau$ is the population median molar depth.
+
+## b. 
+
+Explain why the sign test is appropriate to apply in this case.
+
+We want to know whether the median population differs from a given value based on the values in a sample. This is the definition of a two-tailed sign test.
+
+## c.
+
+A printout of the analysis is shown below. Locate the test statistic.
+
+```{r}
+S=4 #number below 15
+2*pbinom(4,18,0.5)
+```
+The test statistic is S, the number of sample observations less than 15 mm
+
+## d. 
+
+locate the p-value, use it to draw a conclusion. Use $\alpha$=0.05
+
+the p-value is 0.03, since this is less than $\alpha$, we can reject the null hypothesis that the population median molar depth is 15 mm 
+
+# 3. 15.10
+
+Suppose we want to test $H_0:\tau=\tau_0$ against $H_a:\tau \neq \tau_0$ using the sign test, where $S_1$=Number of sample observations greater than $\tau_0$ and $S_2$=Number of sample observations less than $\tau_0$.
+
+Show that $P(S_1 \geq c)=P(S_2 \leq n-c)$ where $0 \leq c \leq n$
+
+If we assume n is our number of sample observations, then $S_1 \geq c$ if and only if $S_2 \leq n-c$, therefore $P(S_1\geq c)=P(S_2\leq n-c)$.
+
+We know $S_1+S_2 \leq n$, since some observations can be equal to $\tau_0$. This shows us that if $S_1\geq c$, then $S_2\leq n-c$ and vice versa.
+
+# 4. 15.11
+
+Refer to the two-tailed test of Exercise 15.10. Use the result of that exercise to show that the observed significance level for the test is p-value=$2P(S_1\geq c)$
+
+This test has a binomial distribution of size n and prob 0.5. Since we have a two-tailed test, we want the probability of the upper tail plus the probability of the lower tail. 
+
+
+```{r}
+density=c()
+x=1:10
+for(i in x){
+  density=append(density,dbinom(i,10,0.5))
+}
+c=7
+n=10
+
+
+plot(x,density)
+rect(xleft=7,xright = 12,ybottom=-1,ytop=1,col="red",density=10)
+rect(xleft=-1,xright=3,ybottom=-1,ytop=1,col="red",density=10)
+```
+
+
+
+So what we want is 
+
+$$p-value=P(S_1\geq c)+P(S_2\leq n-c)$$
+
+Using the result from 15.10
+
+$$p-value=2P(S_1\geq c)$$
+
+# 5. 15.13
+
+Polyethylene terephthalate (PET) bottles are used for carbonated beverages. A critical property of PET bottles is their bursting strength. In the Journal of Data Science, researchers measured the bursting strength of PET bottles made from two different designs-an old design and a new design. The data for 10 bottles of each design are shown. Suppose you want to compare the distributions of bursting strengths for the two designs
+
+```{r}
+old=c(210,212,211,211,190,213,212,211,164,209)
+new=c(216,217,162,137,219,216,179,153,152,217)
+```
+
+## a. 
+
+Rank all 20 observed pressures from smallest to largest, and assign ranks from 1 to 20
+
+```{r}
+old_ranks=c(9,13,10,11,7,14,13,12,5,8)
+new_ranks=c(15,17,4,1,19,16,6,3,2,18)
+```
+
+
+## b. 
+
+Sum the ranks of the observations from the old design
+
+```{r}
+sum(old_ranks)
+```
+
+## c.
+
+Sum the ranks of the observations from the new design
+
+```{r}
+sum(new_ranks)
+```
+
+
+## d. 
+
+Compute the Wilcoxon rank sum statistic
+
+$$Z_C=\frac{T_1-\frac{n_1n_2+n_1(n_1+1)}{2}}{\sqrt{\frac{n_1n_2(n_1+n_2+1)}{12}}}$$
+
+```{r}
+wilcox_stat=function(T1,n1,n2){
+  num=T1-((n1*n2+n1*(n1+1))/(2))
+  denom=sqrt((n1*n2*(n1+n2+1))/(12))
+  
+  return(num/denom)
+}
+
+wilcox_stat(101,10,10)
+
+```
+
+
+## e.
+
+Carry out a nonparametric test (at $\alpha=0.05$) to compare the distribution of bursting strengths for the two designs
+
+```{r}
+wilcox.test(old,new)
+```
+We have very little evidence that the distributions are shifted.
+
+
+
+# 6. 15.14
+
+Refer to the Journal of Engineering for Gas Turbines and Power study of gas turbines augmented with high-pressure inlet fogging, Exercise 8.29. The data on engine heat rate is saved in the GASTURBINE file. Recall that the researchers classified gas turbines into three categories: traditional, advanced, and aeroderivative. Suppose you want to compare the heat rate distributions for traditional and aeroderivative turbine engines.
+
+```{r}
+library(readxl)
+turbine=read_excel('../../Dataxls/Excel/GASTURBINE.XLS')
+head(turbine)
+
+traditional=subset(turbine,ENGINE=="Traditional")
+aeroderiv=subset(turbine,ENGINE=="Aeroderiv")
+```
+
+## a.
+
+Demonstrate that the assumptions required to compare the mean heat rates using a t-test are likely to be violated.
+
+
+```{r}
+library(s20x)
+normcheck(traditional$HEATRATE,shapiro.wilk=TRUE)
+```
+
+The data appears to not be normally distributed.
+
+## b.
+
+```{r}
+wilcox.test(traditional$HEATRATE,aeroderiv$HEATRATE)
+```
+
+With a p-value of 0.3431, we can not reject the null hypothesis that the two distributions are equal.
+
+# 7. 15.23
+
+Refer to the 
+
+# 8. 15.35

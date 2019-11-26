@@ -1,12 +1,17 @@
 Package: Dabb5734
 Type: Package
-Title: What the Package Does (Title Case)
+Title: An S3 OOP Implementation of Bootstrap on MLR Data
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Collin Dabbieri
+Maintainer: Collin Dabbieri <cdabbieri@gmail.com>
+Description: This package generates a series of bootstrap samples for MLR data. It contains a function for plotting histograms of sample estimates of beta hat values, as well as vertical lines for the 100(1-alpha)% confidence interval. It also contains a function for calculating confidence intervals of beta hat values.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
+Suggests: 
+    knitr,
+    rmarkdown,
+    purrr,
+    ggplot2
+VignetteBuilder: knitr
