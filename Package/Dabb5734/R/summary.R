@@ -13,6 +13,7 @@
 #' @export
 #'
 #' @examples
+#' obj=constructor(mtcars,yterm="mpg",xterms="disp+hp")
 #' summary(obj)
 summary.DABB5734boot=function(x,alpha=0.05){
 

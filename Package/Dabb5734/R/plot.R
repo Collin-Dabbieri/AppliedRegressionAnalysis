@@ -11,6 +11,7 @@
 #' @export
 #'
 #' @examples
+#' obj=constructor(mtcars,yterm="mpg",xterms="disp+hp")
 #' plot(obj)
 plot.DABB5734boot=function(x,betaindex=1,alpha=0.05){
   require(ggplot2)

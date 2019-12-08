@@ -21,5 +21,6 @@ http://statweb.stanford.edu/~owen/courses/305-1314/FoxOnBootingRegInR.pdf
 Basically we're just taking the quantiles of our iter beta hat estimates
 }
 \examples{
+obj=constructor(mtcars,yterm="mpg",xterms="disp+hp")
 summary(obj)
 }

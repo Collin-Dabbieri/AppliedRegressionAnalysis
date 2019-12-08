@@ -19,5 +19,6 @@ Histogram of beta hat estimates for iter bootstrap samples,
 also plots vertical lines for the 100(1-alpha) percent confidence interval
 }
 \examples{
+obj=constructor(mtcars,yterm="mpg",xterms="disp+hp")
 plot(obj)
 }
